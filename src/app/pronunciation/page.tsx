@@ -15,7 +15,7 @@ export default async function PronunciationPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold">Phát âm</h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-zinc-400">
           Dán danh sách từ cần luyện, hệ thống sẽ tra phiên âm, cho nghe audio chuẩn và gợi ý mẹo phát âm.
         </p>
       </div>
@@ -25,14 +25,14 @@ export default async function PronunciationPage() {
       <section className="space-y-3">
         <h2 className="font-medium">Danh sách đã lưu</h2>
         {lists.length === 0 ? (
-          <p className="text-sm text-gray-500">Chưa có danh sách nào.</p>
+          <p className="text-sm text-gray-500 dark:text-zinc-400">Chưa có danh sách nào.</p>
         ) : (
-          <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
+          <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
             {lists.map((list) => (
               <div key={list.id} className="flex items-center justify-between px-4 py-3">
-                <Link href={`/pronunciation/${list.id}`} className="text-sm hover:text-blue-600">
+                <Link href={`/pronunciation/${list.id}`} className="text-sm hover:text-blue-600 dark:hover:text-blue-400">
                   <span className="font-medium">{list.title}</span>
-                  <span className="ml-2 text-gray-400">
+                  <span className="ml-2 text-gray-400 dark:text-zinc-500">
                     {list.item_count} từ · {formatDate(list.created_at)}
                   </span>
                 </Link>
@@ -42,7 +42,7 @@ export default async function PronunciationPage() {
                     await deletePronunciationList(list.id);
                   }}
                 >
-                  <button type="submit" className="text-xs text-gray-400 hover:text-red-600">
+                  <button type="submit" className="text-xs text-gray-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400">
                     Xóa
                   </button>
                 </form>
@@ -56,9 +56,9 @@ export default async function PronunciationPage() {
         <h2 className="font-medium">Mẹo phát âm chung</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {GENERAL_PRONUNCIATION_TIPS.map((tip) => (
-            <div key={tip.title} className="rounded-lg border border-gray-200 bg-white p-4">
-              <p className="text-sm font-medium text-gray-900">{tip.title}</p>
-              <p className="mt-1 text-sm text-gray-600">{tip.body}</p>
+            <div key={tip.title} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">{tip.title}</p>
+              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{tip.body}</p>
             </div>
           ))}
         </div>

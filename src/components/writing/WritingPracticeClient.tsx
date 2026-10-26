@@ -80,26 +80,26 @@ export default function WritingPracticeClient({
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <Link href="/writing" className="text-sm text-gray-500 hover:text-blue-600">
+        <Link href="/writing" className="text-sm text-gray-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400">
           ← Quay lại danh sách Writing
         </Link>
         {phase === "active" && (
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
             {formatClock(timeLeft)}
           </span>
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-5">
-        <p className="text-xs font-medium text-gray-400">
+      <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-xs font-medium text-gray-400 dark:text-zinc-500">
           Part {question.part} · {question.group_label} · Câu {question.order_index}
         </p>
-        {question.context && <p className="mt-2 text-sm text-gray-600">{question.context}</p>}
+        {question.context && <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">{question.context}</p>}
         {question.image_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={question.image_url} alt="" className="mt-3 max-h-80 w-full rounded-md object-contain" />
         )}
-        <p className="mt-3 whitespace-pre-wrap text-sm font-medium text-gray-900">
+        <p className="mt-3 whitespace-pre-wrap text-sm font-medium text-gray-900 dark:text-zinc-100">
           {question.prompt_text}
         </p>
       </div>
@@ -107,7 +107,7 @@ export default function WritingPracticeClient({
       {phase === "ready" && (
         <button
           onClick={start}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
         >
           Bắt đầu ({formatClock(question.time_limit_sec)})
         </button>
@@ -121,24 +121,24 @@ export default function WritingPracticeClient({
             disabled={phase === "submitted"}
             rows={10}
             placeholder="Viết câu trả lời của bạn ở đây..."
-            className="w-full rounded-md border border-gray-300 p-3 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-50"
+            className="w-full rounded-md border border-gray-300 bg-white p-3 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400 dark:disabled:bg-zinc-800"
           />
-          {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+          {saveError && <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>}
           {phase === "active" && (
             <button
               onClick={() => submit(false)}
               disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
             >
               {saving ? "Đang lưu..." : "Nộp bài"}
             </button>
           )}
           {phase === "submitted" && (
             <div className="flex items-center gap-3">
-              <p className="text-sm font-medium text-green-700">Đã lưu bài làm.</p>
+              <p className="text-sm font-medium text-green-700 dark:text-green-400">Đã lưu bài làm.</p>
               <Link
                 href={nextHref}
-                className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+                className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
               >
                 Câu tiếp theo →
               </Link>

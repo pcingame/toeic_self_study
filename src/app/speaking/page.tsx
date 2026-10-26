@@ -21,32 +21,32 @@ export default async function SpeakingListPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold">Luyện Speaking</h1>
-        <p className="text-sm text-gray-500">Chọn một câu để luyện tập riêng lẻ. Cần quyền truy cập micro.</p>
+        <p className="text-sm text-gray-500 dark:text-zinc-400">Chọn một câu để luyện tập riêng lẻ. Cần quyền truy cập micro.</p>
       </div>
 
       {byPart.map(({ part, items }) => (
         <section key={part} className="space-y-3">
           <div>
             <h2 className="font-medium">{PART_LABELS[part].title}</h2>
-            <p className="text-sm text-gray-500">{PART_LABELS[part].description}</p>
+            <p className="text-sm text-gray-500 dark:text-zinc-400">{PART_LABELS[part].description}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {items.map((q) => (
               <Link
                 key={q.id}
                 href={`/speaking/${q.part}/${q.id}`}
-                className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-400 hover:shadow-sm"
+                className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-400 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-500"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-400">
+                  <span className="text-xs font-medium text-gray-400 dark:text-zinc-500">
                     Câu {q.order_index} · {q.group_label}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-400 dark:text-zinc-500">
                     {q.prep_time_sec > 0 && `chuẩn bị ${formatClock(q.prep_time_sec)} · `}
                     nói {formatClock(q.speak_time_sec)}
                   </span>
                 </div>
-                <p className="mt-2 line-clamp-2 text-sm text-gray-700">{q.prompt_text}</p>
+                <p className="mt-2 line-clamp-2 text-sm text-gray-700 dark:text-zinc-300">{q.prompt_text}</p>
               </Link>
             ))}
           </div>

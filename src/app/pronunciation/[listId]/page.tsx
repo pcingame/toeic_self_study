@@ -18,11 +18,11 @@ export default async function PronunciationListPage({
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/pronunciation" className="text-sm text-gray-500 hover:text-blue-600">
+          <Link href="/pronunciation" className="text-sm text-gray-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400">
             ← Quay lại Phát âm
           </Link>
           <h1 className="mt-1 text-2xl font-semibold">{list.title}</h1>
-          <p className="text-sm text-gray-500">{items.length} từ</p>
+          <p className="text-sm text-gray-500 dark:text-zinc-400">{items.length} từ</p>
         </div>
       </div>
 
