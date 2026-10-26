@@ -1,0 +1,14 @@
+import { getWritingQuestions } from "@/lib/data/writingQuestions";
+import FullTestWritingClient from "@/components/full-test/FullTestWritingClient";
+
+export default async function FullTestWritingPage() {
+  const questions = await getWritingQuestions();
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Full Test Writing</h1>
+      </div>
+      <FullTestWritingClient questions={questions} />
+    </div>
+  );
+}
