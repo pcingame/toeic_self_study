@@ -6,6 +6,7 @@ const LINKS = [
   { href: "/", label: "Tổng quan" },
   { href: "/writing", label: "Writing" },
   { href: "/speaking", label: "Speaking" },
+  { href: "/pronunciation", label: "Phát âm" },
   { href: "/full-test", label: "Full Test" },
   { href: "/history", label: "Lịch sử" },
 ];

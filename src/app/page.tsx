@@ -50,6 +50,13 @@ export default async function HomePage() {
           <p className="mt-1 text-sm text-gray-500">11 câu, ghi âm và nghe lại bài làm</p>
         </Link>
         <Link
+          href="/pronunciation"
+          className="rounded-lg border border-gray-200 bg-white p-5 hover:border-blue-400 hover:shadow-sm"
+        >
+          <h2 className="font-medium">Phát âm</h2>
+          <p className="mt-1 text-sm text-gray-500">Dán danh sách từ, tra phiên âm &amp; mẹo phát âm</p>
+        </Link>
+        <Link
           href="/full-test"
           className="rounded-lg border border-gray-200 bg-white p-5 hover:border-blue-400 hover:shadow-sm"
         >

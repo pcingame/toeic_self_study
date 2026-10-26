@@ -56,3 +56,18 @@ export interface SpeakingAttempt {
   submitted_at: string | null;
   duration_sec: number | null;
 }
+
+export interface PronunciationList {
+  id: string;
+  user_id: string;
+  title: string;
+  created_at: string;
+}
+
+export interface PronunciationItem {
+  id: string;
+  list_id: string;
+  user_id: string;
+  word: string;
+  order_index: number;
+}
