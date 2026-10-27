@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import WaveformBars from "@/components/WaveformBars";
 import { getTipsForWord } from "@/lib/pronunciationTips";
+import { getWordHistory, recordAttempt, subscribeToWordHistory, type WordHistory } from "@/lib/pronunciationHistory";
 
 interface SpeechRecognitionAlternativeLike {
   transcript: string;
@@ -43,6 +44,16 @@ interface ScoreResult {
   score: number;
   heard: string;
 }
+
+// Messages for SpeechRecognition's error codes. "aborted" is left out --
+// that fires on every user-initiated stop() and isn't a real failure.
+const RECOGNITION_ERROR_MESSAGES: Record<string, string> = {
+  "no-speech": "Không nghe thấy gì, hãy thử lại.",
+  "audio-capture": "Không tìm thấy micro. Hãy kiểm tra thiết bị ghi âm.",
+  "not-allowed": "Trình duyệt chặn quyền truy cập micro. Hãy cấp quyền rồi thử lại.",
+  "service-not-allowed": "Trình duyệt chặn quyền truy cập micro. Hãy cấp quyền rồi thử lại.",
+  network: "Lỗi mạng khi nhận diện giọng nói (cần kết nối Internet). Bản ghi âm vẫn được lưu để bạn nghe lại.",
+};
 
 function pickMimeType(): string {
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
@@ -128,6 +139,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<WordHistory | null>(null);
   // Starts true so server and client render the same markup on mount; corrected
   // right after hydration once `window` is actually available to check.
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -140,7 +152,9 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSpeechSupported(Boolean(window.SpeechRecognition || window.webkitSpeechRecognition));
-  }, []);
+    setHistory(getWordHistory(word));
+    return subscribeToWordHistory(word, setHistory);
+  }, [word]);
 
   useEffect(() => {
     return () => {
@@ -168,6 +182,8 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   }
 
   async function start() {
+    if (recState === "recording") return;
+
     setError(null);
     setResult(null);
     if (audioUrl) {
@@ -175,53 +191,64 @@ export default function PronunciationRecorder({ word }: { word: string }) {
       setAudioUrl(null);
     }
 
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      chunksRef.current = [];
-
-      const mimeType = pickMimeType();
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      recorderRef.current = recorder;
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
-        setAudioUrl(URL.createObjectURL(blob));
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-      };
-      recorder.start();
-
-      const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (Ctor) {
-        const recognition = new Ctor();
-        recognition.lang = "en-US";
-        // Ask for several guesses and re-rank them ourselves -- a single
-        // top guess is too brittle for grading short, isolated words.
-        recognition.maxAlternatives = 5;
-        recognition.interimResults = false;
-        recognition.onresult = (e) => {
-          const resultList = e.results[0];
-          const alternatives: SpeechRecognitionAlternativeLike[] = [];
-          for (let i = 0; i < (resultList?.length ?? 0); i++) {
-            alternatives.push(resultList[i]);
-          }
-          setResult(scoreAlternatives(word, alternatives));
-        };
-        recognition.onerror = (e) => {
-          if (e.error === "no-speech") setError("Không nghe thấy gì, hãy thử lại.");
-        };
-        recognition.onend = () => stop();
-        recognitionRef.current = recognition;
-        recognition.start();
-      }
-
-      setRecState("recording");
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
       setError("Không thể truy cập micro. Hãy kiểm tra quyền truy cập micro cho trang web này.");
-      setRecState("idle");
+      return;
+    }
+
+    streamRef.current = stream;
+    chunksRef.current = [];
+
+    const mimeType = pickMimeType();
+    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    recorderRef.current = recorder;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
+      setAudioUrl(URL.createObjectURL(blob));
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+    recorder.start();
+    setRecState("recording");
+
+    // Speech recognition is a separate, best-effort layer on top of the
+    // recording itself: if it fails to start (already running elsewhere,
+    // offline, etc.) the raw recording still proceeds and stays usable.
+    const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Ctor) return;
+
+    try {
+      const recognition = new Ctor();
+      recognition.lang = "en-US";
+      // Ask for several guesses and re-rank them ourselves -- a single
+      // top guess is too brittle for grading short, isolated words.
+      recognition.maxAlternatives = 5;
+      recognition.interimResults = false;
+      recognition.onresult = (e) => {
+        const resultList = e.results[0];
+        const alternatives: SpeechRecognitionAlternativeLike[] = [];
+        for (let i = 0; i < (resultList?.length ?? 0); i++) {
+          alternatives.push(resultList[i]);
+        }
+        const scored = scoreAlternatives(word, alternatives);
+        setResult(scored);
+        setHistory(recordAttempt(word, scored.score));
+      };
+      recognition.onerror = (e) => {
+        const message = RECOGNITION_ERROR_MESSAGES[e.error];
+        if (message) setError(message);
+      };
+      recognition.onend = () => stop();
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setError("Không khởi động được nhận diện giọng nói, nhưng bản ghi âm vẫn tiếp tục.");
     }
   }
 
@@ -238,16 +265,23 @@ export default function PronunciationRecorder({ word }: { word: string }) {
 
   return (
     <div className="space-y-2 rounded-xl border border-dashed border-[var(--color-border)] p-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted">Luyện phát âm</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted">
+          Luyện phát âm
+          {history && (
+            <span className="ml-2 text-[var(--color-primary)]">
+              🏆 {history.best}/100 · đã luyện {history.attempts} lần
+            </span>
+          )}
+        </span>
         {recState === "recording" ? (
-          <button onClick={stop} className="pill-rec flex items-center gap-2 px-3 py-1 text-xs">
+          <button onClick={stop} className="pill-rec flex shrink-0 items-center gap-2 px-3 py-1 text-xs">
             <WaveformBars active bars={4} className="h-3" />■ Dừng
           </button>
         ) : (
           <button
             onClick={start}
-            className="rounded-xl bg-[var(--color-surface-2)] px-3 py-1 text-xs font-medium text-[var(--color-ink)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] hover:text-[var(--color-primary)]"
+            className="shrink-0 rounded-xl bg-[var(--color-surface-2)] px-3 py-1 text-xs font-medium text-[var(--color-ink)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] hover:text-[var(--color-primary)]"
           >
             🎤 Ghi âm
           </button>
