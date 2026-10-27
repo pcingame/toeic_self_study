@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPronunciationList } from "@/app/pronunciation/actions";
+import { SAMPLE_WORD_LIST } from "@/lib/pronunciationTips";
 
 function parseWords(raw: string): string[] {
   return raw
@@ -20,6 +21,11 @@ export default function PronunciationComposer() {
   const [error, setError] = useState<string | null>(null);
 
   const words = useMemo(() => parseWords(raw), [raw]);
+
+  function loadSample() {
+    setTitle(SAMPLE_WORD_LIST.title);
+    setRaw(SAMPLE_WORD_LIST.words.join("\n"));
+  }
 
   async function submit() {
     if (words.length === 0) return;
@@ -49,9 +55,14 @@ export default function PronunciationComposer() {
         />
       </div>
       <div>
-        <label htmlFor="words" className="block text-sm font-medium">
-          Dán danh sách từ (mỗi từ 1 dòng, hoặc ngăn bằng dấu phẩy)
-        </label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="words" className="block text-sm font-medium">
+            Dán danh sách từ (mỗi từ 1 dòng, hoặc ngăn bằng dấu phẩy)
+          </label>
+          <button type="button" onClick={loadSample} className="link-muted">
+            Dùng danh sách mẫu (Homework IPA)
+          </button>
+        </div>
         <textarea
           id="words"
           value={raw}
