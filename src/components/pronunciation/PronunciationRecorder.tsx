@@ -2,12 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import WaveformBars from "@/components/WaveformBars";
+import { getTipsForWord } from "@/lib/pronunciationTips";
 
-interface SpeechRecognitionResultLike {
+interface SpeechRecognitionAlternativeLike {
   transcript: string;
+  confidence?: number;
+}
+interface SpeechRecognitionResultLike {
+  length: number;
+  [index: number]: SpeechRecognitionAlternativeLike;
 }
 interface SpeechRecognitionEventLike extends Event {
-  results: { [index: number]: { [index: number]: SpeechRecognitionResultLike } };
+  results: { [index: number]: SpeechRecognitionResultLike };
 }
 interface SpeechRecognitionErrorEventLike extends Event {
   error: string;
@@ -32,7 +38,11 @@ declare global {
 }
 
 type RecState = "idle" | "recording" | "done";
-type Verdict = "correct" | "incorrect" | null;
+
+interface ScoreResult {
+  score: number;
+  heard: string;
+}
 
 function pickMimeType(): string {
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
@@ -59,22 +69,63 @@ function levenshtein(a: string, b: string): number {
   return dp[a.length][b.length];
 }
 
-// Single-word check: exact match, whole-word match within a longer transcript,
-// or small edit distance to tolerate recognizer noise.
-function isMatch(target: string, heard: string): boolean {
+// Similarity of one heard phrase against the target word, 0-100. Checks the
+// whole phrase and each individual word in it (recognizers often tack on
+// filler words around a short target), keeping the closest match.
+function wordSimilarity(target: string, heard: string): number {
   const t = normalize(target);
   const h = normalize(heard);
-  if (!t || !h) return false;
-  if (t === h) return true;
-  if (h.split(/\s+/).includes(t)) return true;
-  const dist = levenshtein(t, h);
-  return dist <= Math.max(1, Math.floor(t.length * 0.3));
+  if (!t || !h) return 0;
+  if (t === h) return 100;
+
+  const candidates = [h, ...h.split(/\s+/)];
+  let best = 0;
+  for (const c of candidates) {
+    if (!c) continue;
+    const dist = levenshtein(t, c);
+    const maxLen = Math.max(t.length, c.length);
+    const sim = maxLen === 0 ? 0 : Math.round((1 - dist / maxLen) * 100);
+    if (sim > best) best = sim;
+  }
+  return Math.max(0, Math.min(100, best));
+}
+
+// Re-scores every alternative the recognizer offered and keeps the best
+// match. A low-confidence-but-accurate alternative often ranks below a
+// confident-but-wrong one, so re-ranking by text similarity to the target
+// is more reliable here than trusting the recognizer's own top pick.
+function scoreAlternatives(target: string, alternatives: SpeechRecognitionAlternativeLike[]): ScoreResult {
+  let best: ScoreResult = { score: 0, heard: alternatives[0]?.transcript ?? "" };
+  for (const alt of alternatives) {
+    const score = wordSimilarity(target, alt.transcript);
+    if (score > best.score) best = { score, heard: alt.transcript };
+  }
+  return best;
+}
+
+interface Tier {
+  label: string;
+  emoji: string;
+  textClass: string;
+  barClass: string;
+}
+
+function tierFor(score: number): Tier {
+  if (score >= 90) {
+    return { label: "Xuất sắc", emoji: "🌟", textClass: "text-green-700 dark:text-green-400", barClass: "bg-green-600 dark:bg-green-400" };
+  }
+  if (score >= 70) {
+    return { label: "Tốt", emoji: "✅", textClass: "text-green-700 dark:text-green-400", barClass: "bg-green-600 dark:bg-green-400" };
+  }
+  if (score >= 45) {
+    return { label: "Tạm được — luyện thêm", emoji: "⚠️", textClass: "text-highlight", barClass: "bg-[var(--color-highlight)]" };
+  }
+  return { label: "Chưa đúng — thử lại", emoji: "❌", textClass: "text-error", barClass: "bg-red-500 dark:bg-red-400" };
 }
 
 export default function PronunciationRecorder({ word }: { word: string }) {
   const [recState, setRecState] = useState<RecState>("idle");
-  const [transcript, setTranscript] = useState<string | null>(null);
-  const [verdict, setVerdict] = useState<Verdict>(null);
+  const [result, setResult] = useState<ScoreResult | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Starts true so server and client render the same markup on mount; corrected
@@ -118,8 +169,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
 
   async function start() {
     setError(null);
-    setTranscript(null);
-    setVerdict(null);
+    setResult(null);
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -148,12 +198,17 @@ export default function PronunciationRecorder({ word }: { word: string }) {
       if (Ctor) {
         const recognition = new Ctor();
         recognition.lang = "en-US";
-        recognition.maxAlternatives = 1;
+        // Ask for several guesses and re-rank them ourselves -- a single
+        // top guess is too brittle for grading short, isolated words.
+        recognition.maxAlternatives = 5;
         recognition.interimResults = false;
         recognition.onresult = (e) => {
-          const heard = e.results[0]?.[0]?.transcript ?? "";
-          setTranscript(heard);
-          setVerdict(isMatch(word, heard) ? "correct" : "incorrect");
+          const resultList = e.results[0];
+          const alternatives: SpeechRecognitionAlternativeLike[] = [];
+          for (let i = 0; i < (resultList?.length ?? 0); i++) {
+            alternatives.push(resultList[i]);
+          }
+          setResult(scoreAlternatives(word, alternatives));
         };
         recognition.onerror = (e) => {
           if (e.error === "no-speech") setError("Không nghe thấy gì, hãy thử lại.");
@@ -173,11 +228,13 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   function reset() {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
-    setTranscript(null);
-    setVerdict(null);
+    setResult(null);
     setError(null);
     setRecState("idle");
   }
+
+  const tier = result ? tierFor(result.score) : null;
+  const tips = getTipsForWord(word);
 
   return (
     <div className="space-y-2 rounded-xl border border-dashed border-[var(--color-border)] p-3">
@@ -199,8 +256,8 @@ export default function PronunciationRecorder({ word }: { word: string }) {
 
       {!speechSupported && (
         <p className="text-highlight text-xs">
-          Trình duyệt này không hỗ trợ nhận diện giọng nói — chỉ ghi âm để tự nghe lại, không kiểm tra đúng/sai
-          được. Dùng Chrome để có tính năng kiểm tra.
+          Trình duyệt này không hỗ trợ nhận diện giọng nói — chỉ ghi âm để tự nghe lại, không chấm điểm được. Dùng
+          Chrome để có tính năng này.
         </p>
       )}
 
@@ -213,17 +270,26 @@ export default function PronunciationRecorder({ word }: { word: string }) {
       {recState === "done" && (
         <div className="space-y-2">
           {audioUrl && <audio controls src={audioUrl} className="w-full" />}
-          {verdict && (
-            <p
-              className={`animate-pop text-xs font-medium ${
-                verdict === "correct" ? "text-green-700 dark:text-green-400" : "animate-shake text-highlight"
-              }`}
-            >
-              {verdict === "correct"
-                ? `✅ Đúng rồi! Nhận diện: "${transcript}"`
-                : `⚠️ Chưa khớp. Máy nghe được: "${transcript}" — hãy thử lại.`}
-            </p>
+
+          {result && tier && (
+            <div className={`animate-pop space-y-1.5 ${result.score < 45 ? "animate-shake" : ""}`}>
+              <div className="flex items-center justify-between text-xs font-medium">
+                <span className={tier.textClass}>
+                  {tier.emoji} {tier.label}
+                </span>
+                <span className={tier.textClass}>{result.score}/100</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-2)]">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${tier.barClass}`}
+                  style={{ width: `${result.score}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted">Máy nghe được: &quot;{result.heard || "(không rõ)"}&quot;</p>
+              {result.score < 70 && tips.length > 0 && <p className="tip-highlight">{tips[0]}</p>}
+            </div>
           )}
+
           <button onClick={reset} className="btn-ghost px-3 py-1 text-xs">
             Thử lại
           </button>
