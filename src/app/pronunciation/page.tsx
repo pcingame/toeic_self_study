@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getPronunciationLists } from "@/lib/data/pronunciation";
 import { GENERAL_PRONUNCIATION_TIPS } from "@/lib/pronunciationTips";
 import PronunciationComposer from "@/components/pronunciation/PronunciationComposer";
-import { deletePronunciationList } from "./actions";
+import DeleteListButton from "@/components/pronunciation/DeleteListButton";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("vi-VN");
@@ -36,16 +36,7 @@ export default async function PronunciationPage() {
                     {list.item_count} từ · {formatDate(list.created_at)}
                   </span>
                 </Link>
-                <form
-                  action={async () => {
-                    "use server";
-                    await deletePronunciationList(list.id);
-                  }}
-                >
-                  <button type="submit" className="text-xs text-muted hover:text-red-600 dark:hover:text-red-400">
-                    Xóa
-                  </button>
-                </form>
+                <DeleteListButton listId={list.id} title={list.title} />
               </div>
             ))}
           </div>

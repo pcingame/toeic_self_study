@@ -14,7 +14,7 @@ export default function NavLinks({ links }: { links: { href: string; label: stri
           <Link
             key={link.href}
             href={link.href}
-            className={`ink-underline pb-0.5 transition-colors ${
+            className={`ink-underline shrink-0 pb-0.5 whitespace-nowrap transition-colors ${
               active ? "bg-[length:100%_2px] font-medium text-[var(--color-primary)]" : "text-muted"
             }`}
           >

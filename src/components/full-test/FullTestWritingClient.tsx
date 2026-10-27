@@ -164,7 +164,7 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
 
       {stage.kind === "group" ? (
         <div className="space-y-3">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {stage.questions.map((q, i) => (
               <button
                 key={q.id}

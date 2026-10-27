@@ -22,15 +22,15 @@ export default async function NavBar() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-paper)]/80 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
+      <nav className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-6 overflow-x-auto">
+          <Link href="/" className="flex shrink-0 items-center gap-2 font-display text-lg font-semibold">
             <WaveformBars className="text-[var(--color-primary)]" />
-            TOEIC Self-Study
+            <span className="hidden sm:inline">TOEIC Self-Study</span>
           </Link>
           <NavLinks links={LINKS} />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <ThemeToggle />
           <form action={logout}>
             <button type="submit" className="text-sm text-muted transition-colors hover:text-[var(--color-accent)]">
