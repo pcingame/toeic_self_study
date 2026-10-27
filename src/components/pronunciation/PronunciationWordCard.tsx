@@ -2,19 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getTipsForWord } from "@/lib/pronunciationTips";
+import { lookupPhonetic } from "@/lib/phonetics";
 import PronunciationRecorder from "@/components/pronunciation/PronunciationRecorder";
-
-interface DictionaryEntry {
-  phonetic?: string;
-  phonetics?: { text?: string; audio?: string }[];
-}
-
-// dictionaryapi.dev sometimes returns protocol-relative audio URLs
-// (e.g. "//ssl.gstatic.com/..."), which some browsers refuse to load
-// via `new Audio()` without an explicit scheme.
-function normalizeAudioUrl(url: string): string {
-  return url.startsWith("//") ? `https:${url}` : url;
-}
 
 // Chrome silently drops the very first speechSynthesis.speak() call if the
 // voice list hasn't finished loading yet -- wait for it (with a timeout so
@@ -35,6 +24,7 @@ function waitForVoices(): Promise<SpeechSynthesisVoice[]> {
 export default function PronunciationWordCard({ word }: { word: string }) {
   const [phonetic, setPhonetic] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [estimated, setEstimated] = useState(false);
   const [status, setStatus] = useState<"loading" | "found" | "not-found">("loading");
   const [playError, setPlayError] = useState<string | null>(null);
 
@@ -44,26 +34,13 @@ export default function PronunciationWordCard({ word }: { word: string }) {
     let cancelled = false;
 
     async function run() {
-      try {
-        const res = await fetch(
-          `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`,
-        );
-        if (!res.ok) throw new Error("not found");
-        const entries = (await res.json()) as DictionaryEntry[];
-        if (cancelled) return;
+      const result = await lookupPhonetic(word);
+      if (cancelled) return;
 
-        const withAudio = entries.flatMap((e) => e.phonetics ?? []).find((p) => p.audio);
-        const anyPhonetic =
-          entries.find((e) => e.phonetic)?.phonetic ??
-          entries.flatMap((e) => e.phonetics ?? []).find((p) => p.text)?.text ??
-          null;
-
-        setPhonetic(anyPhonetic);
-        setAudioUrl(withAudio?.audio ? normalizeAudioUrl(withAudio.audio) : null);
-        setStatus("found");
-      } catch {
-        if (!cancelled) setStatus("not-found");
-      }
+      setPhonetic(result.phonetic);
+      setAudioUrl(result.audio);
+      setEstimated(result.estimated);
+      setStatus(result.phonetic ? "found" : "not-found");
     }
 
     void run();
@@ -114,8 +91,13 @@ export default function PronunciationWordCard({ word }: { word: string }) {
       </div>
       <p className="text-sm text-muted">
         {status === "loading" && "Đang tra phiên âm..."}
-        {status === "found" && (phonetic ?? "(không có phiên âm)")}
-        {status === "not-found" && "(không tìm thấy trong từ điển, dùng audio tổng hợp)"}
+        {status === "found" && (
+          <>
+            {phonetic}
+            {estimated && <span className="ml-1 text-xs">(ước tính từ nguồn phụ)</span>}
+          </>
+        )}
+        {status === "not-found" && "(không tìm thấy phiên âm ở các nguồn, dùng audio tổng hợp)"}
       </p>
       {playError && <p className="text-error text-xs">{playError}</p>}
       {tips.length > 0 && (
