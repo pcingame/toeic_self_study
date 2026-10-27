@@ -8,12 +8,35 @@ import type { SpeakingQuestion } from "@/types/database";
 
 type Phase = "ready" | "prep" | "recording" | "review";
 
+// How long to wait for the recorder to actually stop (fire onstop) after
+// calling stop() before giving up and surfacing an error. A clean stop is
+// near-instant; a stuck one (device dropped mid-recording, etc.) would
+// otherwise freeze the UI on "Đang ghi âm" with a dead countdown forever.
+const RECORDER_STOP_TIMEOUT_MS = 5_000;
+
 function pickMimeType(): string {
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
   for (const type of candidates) {
     if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(type)) return type;
   }
   return "";
+}
+
+function describeMicError(err: unknown): string {
+  const name = err instanceof DOMException ? err.name : "";
+  switch (name) {
+    case "NotAllowedError":
+    case "PermissionDeniedError":
+      return "Trình duyệt chặn quyền truy cập micro. Hãy cấp quyền rồi thử lại.";
+    case "NotFoundError":
+    case "DevicesNotFoundError":
+      return "Không tìm thấy micro. Hãy kiểm tra thiết bị ghi âm.";
+    case "NotReadableError":
+    case "TrackStartError":
+      return "Micro đang được ứng dụng khác sử dụng. Hãy đóng ứng dụng đó rồi thử lại.";
+    default:
+      return "Không thể truy cập micro. Hãy kiểm tra quyền truy cập micro cho trang web này.";
+  }
 }
 
 export default function SpeakingRecorder({
@@ -36,9 +59,11 @@ export default function SpeakingRecorder({
   const chunksRef = useRef<Blob[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
   const startedAtRef = useRef<string | null>(null);
+  const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
+      if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
@@ -46,6 +71,7 @@ export default function SpeakingRecorder({
   }, []);
 
   function start() {
+    if (phase !== "ready") return;
     startedAtRef.current = new Date().toISOString();
     setError(null);
     if (question.prep_time_sec > 0) {
@@ -56,38 +82,70 @@ export default function SpeakingRecorder({
     }
   }
 
-  async function beginRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      chunksRef.current = [];
-
-      const mimeType = pickMimeType();
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      recorderRef.current = recorder;
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
-        audioBlobRef.current = blob;
-        setAudioUrl(URL.createObjectURL(blob));
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        setPhase("review");
-      };
-
-      recorder.start();
-      setTimeLeft(question.speak_time_sec);
-      setPhase("recording");
-    } catch {
-      setError("Không thể truy cập micro. Hãy kiểm tra quyền truy cập micro cho trang web này.");
-      setPhase("ready");
+  function failRecording(message: string) {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
     }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    setError(message);
+    setPhase("ready");
+  }
+
+  async function beginRecording() {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      setError(describeMicError(err));
+      setPhase("ready");
+      return;
+    }
+
+    streamRef.current = stream;
+    chunksRef.current = [];
+
+    let recorder: MediaRecorder;
+    const mimeType = pickMimeType();
+    try {
+      recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      setError("Trình duyệt này không hỗ trợ ghi âm. Hãy thử trên Chrome hoặc Edge.");
+      setPhase("ready");
+      return;
+    }
+    recorderRef.current = recorder;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    recorder.onstop = () => {
+      if (stopTimeoutRef.current) {
+        clearTimeout(stopTimeoutRef.current);
+        stopTimeoutRef.current = null;
+      }
+      const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
+      audioBlobRef.current = blob;
+      setAudioUrl(URL.createObjectURL(blob));
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      setPhase("review");
+    };
+    recorder.onerror = () => {
+      failRecording("Có lỗi khi ghi âm (thiết bị bị ngắt giữa chừng?). Hãy thử ghi âm lại.");
+    };
+
+    recorder.start();
+    setTimeLeft(question.speak_time_sec);
+    setPhase("recording");
   }
 
   function stopRecording() {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      stopTimeoutRef.current = setTimeout(
+        () => failRecording("Ghi âm bị treo và không dừng được. Hãy thử ghi âm lại."),
+        RECORDER_STOP_TIMEOUT_MS,
+      );
       recorderRef.current.stop();
     }
   }
@@ -138,7 +196,7 @@ export default function SpeakingRecorder({
       .upload(path, blob, { contentType: blob.type });
 
     if (uploadError) {
-      setError(uploadError.message);
+      setError(`Lỗi khi tải file ghi âm lên: ${uploadError.message}`);
       setSaving(false);
       return;
     }
@@ -156,7 +214,7 @@ export default function SpeakingRecorder({
 
     setSaving(false);
     if (insertError) {
-      setError(insertError.message);
+      setError(`Lỗi khi lưu bài làm: ${insertError.message}`);
       return;
     }
     onSubmitted();
