@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getTipsForWord } from "@/lib/pronunciationTips";
+import PronunciationRecorder from "@/components/pronunciation/PronunciationRecorder";
 
 interface DictionaryEntry {
   phonetic?: string;
@@ -90,6 +91,7 @@ export default function PronunciationWordCard({ word }: { word: string }) {
           ))}
         </ul>
       )}
+      <PronunciationRecorder word={word} />
     </div>
   );
 }
