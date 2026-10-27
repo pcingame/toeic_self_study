@@ -4,6 +4,10 @@
 
 const STORAGE_KEY = "pronunciation-history";
 
+// Score (out of 100) a word's best attempt must reach to count as mastered.
+// Matches the "Tốt" tier threshold in PronunciationRecorder.
+export const MASTERY_THRESHOLD = 70;
+
 export interface WordHistory {
   best: number;
   attempts: number;

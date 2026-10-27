@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import WaveformBars from "@/components/WaveformBars";
 import { getTipsForWord } from "@/lib/pronunciationTips";
-import { getWordHistory, recordAttempt, subscribeToWordHistory, type WordHistory } from "@/lib/pronunciationHistory";
+import {
+  getWordHistory,
+  recordAttempt,
+  subscribeToWordHistory,
+  MASTERY_THRESHOLD,
+  type WordHistory,
+} from "@/lib/pronunciationHistory";
 
 interface SpeechRecognitionAlternativeLike {
   transcript: string;
@@ -130,7 +136,7 @@ function tierFor(score: number): Tier {
   if (score >= 90) {
     return { label: "Xuất sắc", emoji: "🌟", textClass: "text-green-700 dark:text-green-400", barClass: "bg-green-600 dark:bg-green-400" };
   }
-  if (score >= 70) {
+  if (score >= MASTERY_THRESHOLD) {
     return { label: "Tốt", emoji: "✅", textClass: "text-green-700 dark:text-green-400", barClass: "bg-green-600 dark:bg-green-400" };
   }
   if (score >= 45) {
@@ -348,7 +354,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
                 />
               </div>
               <p className="text-xs text-muted">Máy nghe được: &quot;{result.heard || "(không rõ)"}&quot;</p>
-              {result.score < 70 && tips.length > 0 && <p className="tip-highlight">{tips[0]}</p>}
+              {result.score < MASTERY_THRESHOLD && tips.length > 0 && <p className="tip-highlight">{tips[0]}</p>}
             </div>
           )}
 

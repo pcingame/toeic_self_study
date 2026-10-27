@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPronunciationListWithItems } from "@/lib/data/pronunciation";
 import PronunciationWordCard from "@/components/pronunciation/PronunciationWordCard";
+import PronunciationListProgress from "@/components/pronunciation/PronunciationListProgress";
 
 export default async function PronunciationListPage({
   params,
@@ -25,6 +26,8 @@ export default async function PronunciationListPage({
           <p className="text-sm text-muted">{items.length} từ</p>
         </div>
       </div>
+
+      <PronunciationListProgress words={items.map((item) => item.word)} />
 
       <div className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
