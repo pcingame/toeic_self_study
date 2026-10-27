@@ -55,6 +55,11 @@ const RECOGNITION_ERROR_MESSAGES: Record<string, string> = {
   network: "Lỗi mạng khi nhận diện giọng nói (cần kết nối Internet). Bản ghi âm vẫn được lưu để bạn nghe lại.",
 };
 
+// How long to wait for the recognizer before forcing a stop. It's supposed
+// to end on its own (after a result, an error, or silence), but a dropped
+// connection can leave it hanging with the mic open and no feedback.
+const RECOGNITION_SAFETY_TIMEOUT_MS = 10_000;
+
 function pickMimeType(): string {
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
   for (const type of candidates) {
@@ -140,6 +145,10 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<WordHistory | null>(null);
+  // Tracks whether recognition actually got going this attempt, so a
+  // silent "no result, no error" outcome can get an explanation instead
+  // of just... nothing.
+  const [recognitionAttempted, setRecognitionAttempted] = useState(false);
   // Starts true so server and client render the same markup on mount; corrected
   // right after hydration once `window` is actually available to check.
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -148,6 +157,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -158,6 +168,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
 
   useEffect(() => {
     return () => {
+      if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
       try {
         recognitionRef.current?.stop();
@@ -170,6 +181,10 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   }, []);
 
   function stop() {
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current);
+      safetyTimeoutRef.current = null;
+    }
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
       recorderRef.current.stop();
     }
@@ -186,6 +201,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
 
     setError(null);
     setResult(null);
+    setRecognitionAttempted(false);
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -241,12 +257,17 @@ export default function PronunciationRecorder({ word }: { word: string }) {
         setHistory(recordAttempt(word, scored.score));
       };
       recognition.onerror = (e) => {
-        const message = RECOGNITION_ERROR_MESSAGES[e.error];
-        if (message) setError(message);
+        if (e.error === "aborted") return; // we triggered this ourselves via stop()
+        setError(RECOGNITION_ERROR_MESSAGES[e.error] ?? "Có lỗi khi nhận diện giọng nói, hãy thử lại.");
       };
       recognition.onend = () => stop();
       recognitionRef.current = recognition;
       recognition.start();
+      setRecognitionAttempted(true);
+      // Recognition is supposed to end on its own, but a dropped connection
+      // can leave it hanging with no result and no error -- force it closed
+      // rather than leave the mic open and the UI stuck on "Đang nghe".
+      safetyTimeoutRef.current = setTimeout(stop, RECOGNITION_SAFETY_TIMEOUT_MS);
     } catch {
       setError("Không khởi động được nhận diện giọng nói, nhưng bản ghi âm vẫn tiếp tục.");
     }
@@ -257,6 +278,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
     setAudioUrl(null);
     setResult(null);
     setError(null);
+    setRecognitionAttempted(false);
     setRecState("idle");
   }
 
@@ -304,6 +326,12 @@ export default function PronunciationRecorder({ word }: { word: string }) {
       {recState === "done" && (
         <div className="space-y-2">
           {audioUrl && <audio controls src={audioUrl} className="w-full" />}
+
+          {recognitionAttempted && !result && !error && (
+            <p className="text-highlight text-xs">
+              Không nhận diện được giọng nói rõ ràng. Hãy thử nói to và rõ hơn, gần micro hơn.
+            </p>
+          )}
 
           {result && tier && (
             <div className={`animate-pop space-y-1.5 ${result.score < 45 ? "animate-shake" : ""}`}>
