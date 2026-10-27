@@ -3,32 +3,32 @@
 :root {
   color-scheme: light dark;
 
-  --color-paper: #f6f5fb;
+  --color-paper: #f8f4fb;
   --color-surface: #ffffff;
-  --color-surface-2: #f0eef9;
-  --color-border: #e3e0f2;
-  --color-ink: #1e1b2e;
-  --color-muted: #6b6680;
-  --color-primary: #4a3aeb;
-  --color-primary-strong: #392dc2;
-  --color-accent: #ff6b4d;
-  --color-accent-strong: #ea5736;
-  --color-success: #189a6c;
+  --color-surface-2: #f3edf8;
+  --color-border: #e8dff0;
+  --color-ink: #4a4258;
+  --color-muted: #8d84a0;
+  --color-primary: #9b8fd9;
+  --color-primary-strong: #8577c9;
+  --color-accent: #f4a89b;
+  --color-accent-strong: #e8927f;
+  --color-success: #8fcbaa;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-paper: #121018;
-    --color-surface: #1b1926;
-    --color-surface-2: #221f30;
-    --color-border: #2d2a3d;
-    --color-ink: #f1effa;
-    --color-muted: #9b96b3;
-    --color-primary: #8c7dff;
-    --color-primary-strong: #a79aff;
-    --color-accent: #ff8468;
-    --color-accent-strong: #ff9a81;
-    --color-success: #2fbe8b;
+    --color-paper: #1d1a24;
+    --color-surface: #27222f;
+    --color-surface-2: #302a3b;
+    --color-border: #3b3448;
+    --color-ink: #ece7f2;
+    --color-muted: #a99fbd;
+    --color-primary: #b7aaea;
+    --color-primary-strong: #c9bef0;
+    --color-accent: #f3b6a8;
+    --color-accent-strong: #f7c7bb;
+    --color-success: #9ed6b8;
   }
 }
 
@@ -99,11 +99,11 @@
   }
 
   .card {
-    @apply rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(30,27,46,0.04),0_16px_32px_-24px_rgba(74,58,235,0.25)];
+    @apply rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(74,66,88,0.04),0_16px_32px_-24px_rgba(111,95,184,0.2)];
   }
 
   .card-link {
-    @apply block rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(30,27,46,0.04),0_16px_32px_-24px_rgba(74,58,235,0.25)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[var(--color-primary)] hover:shadow-[0_1px_2px_rgba(30,27,46,0.04),0_20px_36px_-20px_rgba(74,58,235,0.35)];
+    @apply block rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_1px_2px_rgba(74,66,88,0.04),0_16px_32px_-24px_rgba(111,95,184,0.2)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[var(--color-primary)] hover:shadow-[0_1px_2px_rgba(74,66,88,0.04),0_20px_36px_-20px_rgba(111,95,184,0.28)];
   }
 
   .btn-primary,

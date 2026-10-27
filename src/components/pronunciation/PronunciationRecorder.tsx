@@ -77,14 +77,19 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   const [verdict, setVerdict] = useState<Verdict>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [speechSupported] = useState(
-    () => typeof window !== "undefined" && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
-  );
+  // Starts true so server and client render the same markup on mount; corrected
+  // right after hydration once `window` is actually available to check.
+  const [speechSupported, setSpeechSupported] = useState(true);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSpeechSupported(Boolean(window.SpeechRecognition || window.webkitSpeechRecognition));
+  }, []);
 
   useEffect(() => {
     return () => {
