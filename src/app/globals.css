@@ -9,11 +9,12 @@
   --color-border: #e8dff0;
   --color-ink: #4a4258;
   --color-muted: #8d84a0;
-  --color-primary: #9b8fd9;
-  --color-primary-strong: #8577c9;
-  --color-accent: #f4a89b;
-  --color-accent-strong: #e8927f;
+  --color-primary: #6f5fb8;
+  --color-primary-strong: #5c4ea3;
+  --color-accent: #c96a55;
+  --color-accent-strong: #b35a47;
   --color-success: #8fcbaa;
+  --color-highlight: #a97c3d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,12 +25,47 @@
     --color-border: #3b3448;
     --color-ink: #ece7f2;
     --color-muted: #a99fbd;
-    --color-primary: #b7aaea;
-    --color-primary-strong: #c9bef0;
-    --color-accent: #f3b6a8;
-    --color-accent-strong: #f7c7bb;
+    --color-primary: #9483d6;
+    --color-primary-strong: #8572c9;
+    --color-accent: #c97a62;
+    --color-accent-strong: #b4694f;
     --color-success: #9ed6b8;
+    --color-highlight: #d9b876;
   }
+}
+
+/* Explicit theme override via the toggle in NavBar — wins over the OS
+   preference above because an attribute selector outranks a bare :root. */
+:root[data-theme="light"] {
+  --color-paper: #f8f4fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3edf8;
+  --color-border: #e8dff0;
+  --color-ink: #4a4258;
+  --color-muted: #8d84a0;
+  --color-primary: #6f5fb8;
+  --color-primary-strong: #5c4ea3;
+  --color-accent: #c96a55;
+  --color-accent-strong: #b35a47;
+  --color-success: #8fcbaa;
+  --color-highlight: #a97c3d;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --color-paper: #1d1a24;
+  --color-surface: #27222f;
+  --color-surface-2: #302a3b;
+  --color-border: #3b3448;
+  --color-ink: #ece7f2;
+  --color-muted: #a99fbd;
+  --color-primary: #9483d6;
+  --color-primary-strong: #8572c9;
+  --color-accent: #c97a62;
+  --color-accent-strong: #b4694f;
+  --color-success: #9ed6b8;
+  --color-highlight: #d9b876;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -48,6 +84,7 @@
   --color-accent: var(--color-accent);
   --color-accent-strong: var(--color-accent-strong);
   --color-success: var(--color-success);
+  --color-highlight: var(--color-highlight);
 }
 
 @layer base {
@@ -127,6 +164,18 @@
 
   .btn-ghost {
     @apply border border-[var(--color-border)] bg-transparent text-[var(--color-ink)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)];
+  }
+
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] bg-transparent text-[var(--color-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)];
+  }
+
+  .text-highlight {
+    @apply text-[var(--color-highlight)];
+  }
+
+  .tip-highlight {
+    @apply rounded-xl bg-[color-mix(in_srgb,var(--color-highlight)_14%,transparent)] px-2 py-1 text-xs text-[var(--color-highlight)];
   }
 
   .input-field {

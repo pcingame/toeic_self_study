@@ -82,10 +82,7 @@ export default function PronunciationWordCard({ word }: { word: string }) {
       {tips.length > 0 && (
         <ul className="space-y-1">
           {tips.map((tip) => (
-            <li
-              key={tip}
-              className="rounded-xl bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-            >
+            <li key={tip} className="tip-highlight">
               {tip}
             </li>
           ))}

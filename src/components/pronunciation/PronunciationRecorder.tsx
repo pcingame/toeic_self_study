@@ -198,7 +198,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
       </div>
 
       {!speechSupported && (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
+        <p className="text-highlight text-xs">
           Trình duyệt này không hỗ trợ nhận diện giọng nói — chỉ ghi âm để tự nghe lại, không kiểm tra đúng/sai
           được. Dùng Chrome để có tính năng kiểm tra.
         </p>
@@ -216,7 +216,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
           {verdict && (
             <p
               className={`animate-pop text-xs font-medium ${
-                verdict === "correct" ? "text-green-700 dark:text-green-400" : "animate-shake text-amber-700 dark:text-amber-400"
+                verdict === "correct" ? "text-green-700 dark:text-green-400" : "animate-shake text-highlight"
               }`}
             >
               {verdict === "correct"

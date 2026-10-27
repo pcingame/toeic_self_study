@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/login/actions";
 import NavLinks from "@/components/NavLinks";
 import WaveformBars from "@/components/WaveformBars";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const LINKS = [
   { href: "/", label: "Tổng quan" },
@@ -29,11 +30,14 @@ export default async function NavBar() {
           </Link>
           <NavLinks links={LINKS} />
         </div>
-        <form action={logout}>
-          <button type="submit" className="text-sm text-muted transition-colors hover:text-[var(--color-accent)]">
-            Đăng xuất
-          </button>
-        </form>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <form action={logout}>
+            <button type="submit" className="text-sm text-muted transition-colors hover:text-[var(--color-accent)]">
+              Đăng xuất
+            </button>
+          </form>
+        </div>
       </nav>
     </header>
   );
