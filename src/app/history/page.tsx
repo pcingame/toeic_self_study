@@ -13,21 +13,19 @@ export default async function HistoryPage() {
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="animate-fade-up space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Lịch sử luyện tập</h1>
-        <p className="text-sm text-gray-500 dark:text-zinc-400">Xem lại các bài làm đã lưu.</p>
+        <h1 className="h1-page">Lịch sử luyện tập</h1>
+        <p className="mt-1 text-sm text-muted">Xem lại các bài làm đã lưu.</p>
       </div>
 
       <section className="space-y-3">
-        <h2 className="font-medium">Writing</h2>
-        {writingAttempts.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-zinc-400">Chưa có bài Writing nào được lưu.</p>
-        )}
-        <div className="space-y-3">
+        <h2 className="font-display text-lg font-medium">Writing</h2>
+        {writingAttempts.length === 0 && <p className="text-sm text-muted">Chưa có bài Writing nào được lưu.</p>}
+        <div className="stagger space-y-3">
           {writingAttempts.map((attempt) => (
-            <div key={attempt.id} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 dark:text-zinc-500">
+            <div key={attempt.id} className="card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
                 <span>
                   Part {attempt.writing_questions.part} · {attempt.writing_questions.group_label} ·
                   Câu {attempt.writing_questions.order_index}
@@ -37,9 +35,9 @@ export default async function HistoryPage() {
                   {attempt.duration_sec != null && ` · dùng ${formatClock(attempt.duration_sec)}`}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-gray-500 italic dark:text-zinc-400">{attempt.writing_questions.prompt_text}</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-gray-900 dark:text-zinc-100">
-                {attempt.answer_text || <span className="text-gray-400 dark:text-zinc-500">(không có nội dung)</span>}
+              <p className="mt-2 text-sm italic text-muted">{attempt.writing_questions.prompt_text}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--color-ink)]">
+                {attempt.answer_text || <span className="text-muted">(không có nội dung)</span>}
               </p>
             </div>
           ))}
@@ -47,14 +45,12 @@ export default async function HistoryPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">Speaking</h2>
-        {speakingAttempts.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-zinc-400">Chưa có bài Speaking nào được lưu.</p>
-        )}
-        <div className="space-y-3">
+        <h2 className="font-display text-lg font-medium">Speaking</h2>
+        {speakingAttempts.length === 0 && <p className="text-sm text-muted">Chưa có bài Speaking nào được lưu.</p>}
+        <div className="stagger space-y-3">
           {speakingAttempts.map((attempt) => (
-            <div key={attempt.id} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 dark:text-zinc-500">
+            <div key={attempt.id} className="card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
                 <span>
                   Part {attempt.speaking_questions.part} · {attempt.speaking_questions.group_label} ·
                   Câu {attempt.speaking_questions.order_index}
@@ -64,11 +60,11 @@ export default async function HistoryPage() {
                   {attempt.duration_sec != null && ` · ${formatClock(attempt.duration_sec)}`}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-gray-500 italic dark:text-zinc-400">{attempt.speaking_questions.prompt_text}</p>
+              <p className="mt-2 text-sm italic text-muted">{attempt.speaking_questions.prompt_text}</p>
               {attempt.audioUrl ? (
                 <audio controls src={attempt.audioUrl} className="mt-2 w-full" />
               ) : (
-                <p className="mt-2 text-sm text-gray-400 dark:text-zinc-500">(không có file ghi âm)</p>
+                <p className="mt-2 text-sm text-muted">(không có file ghi âm)</p>
               )}
             </div>
           ))}

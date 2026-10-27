@@ -15,18 +15,18 @@ export default async function PronunciationListPage({
   const { list, items } = result;
 
   return (
-    <div className="space-y-5">
+    <div className="animate-fade-up space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/pronunciation" className="text-sm text-gray-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400">
+          <Link href="/pronunciation" className="link-muted">
             ← Quay lại Phát âm
           </Link>
-          <h1 className="mt-1 text-2xl font-semibold">{list.title}</h1>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">{items.length} từ</p>
+          <h1 className="mt-1 h1-page">{list.title}</h1>
+          <p className="text-sm text-muted">{items.length} từ</p>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <PronunciationWordCard key={item.id} word={item.word} />
         ))}

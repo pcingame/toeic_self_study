@@ -17,8 +17,8 @@ export default function SpeakingPracticeClient({
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="space-y-5">
-      <Link href="/speaking" className="text-sm text-gray-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400">
+    <div className="animate-fade-up space-y-5">
+      <Link href="/speaking" className="link-muted">
         ← Quay lại danh sách Speaking
       </Link>
 
@@ -26,11 +26,8 @@ export default function SpeakingPracticeClient({
         <SpeakingRecorder question={question} sessionId={sessionId} onSubmitted={() => setSubmitted(true)} />
       ) : (
         <div className="flex items-center gap-3">
-          <p className="text-sm font-medium text-green-700 dark:text-green-400">Đã lưu bài làm.</p>
-          <Link
-            href={nextHref}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
-          >
+          <p className="text-success text-sm">Đã lưu bài làm.</p>
+          <Link href={nextHref} className="btn-dark">
             Câu tiếp theo →
           </Link>
         </div>

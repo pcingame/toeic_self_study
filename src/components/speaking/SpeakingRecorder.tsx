@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock } from "@/lib/examTiming";
+import WaveformBars from "@/components/WaveformBars";
 import type { SpeakingQuestion } from "@/types/database";
 
 type Phase = "ready" | "prep" | "recording" | "review";
@@ -164,37 +165,29 @@ export default function SpeakingRecorder({
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-gray-400 dark:text-zinc-500">
+        <p className="text-xs font-medium text-muted">
           Part {question.part} · {question.group_label} · Câu {question.order_index}
         </p>
         {(phase === "prep" || phase === "recording") && (
-          <span
-            className={`rounded-full px-3 py-1 text-sm font-medium ${
-              phase === "recording"
-                ? "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300"
-                : "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
-            }`}
-          >
-            {phase === "prep" ? "Chuẩn bị" : "● Đang ghi âm"} · {formatClock(timeLeft)}
+          <span className={phase === "recording" ? "pill-rec flex items-center gap-2" : "pill-timer"}>
+            {phase === "recording" && <WaveformBars active bars={4} className="h-3" />}
+            {phase === "prep" ? "Chuẩn bị" : "Đang ghi âm"} · {formatClock(timeLeft)}
           </span>
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="card p-5">
         {question.image_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={question.image_url} alt="" className="mb-3 max-h-80 w-full rounded-md object-contain" />
         )}
-        <p className="whitespace-pre-wrap text-sm font-medium text-gray-900 dark:text-zinc-100">{question.prompt_text}</p>
+        <p className="whitespace-pre-wrap text-sm font-medium text-[var(--color-ink)]">{question.prompt_text}</p>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-error text-sm">{error}</p>}
 
       {phase === "ready" && (
-        <button
-          onClick={start}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
-        >
+        <button onClick={start} className="btn-accent">
           Bắt đầu
         </button>
       )}
@@ -203,17 +196,10 @@ export default function SpeakingRecorder({
         <div className="space-y-3">
           <audio controls src={audioUrl} className="w-full" />
           <div className="flex gap-3">
-            <button
-              onClick={reRecord}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
+            <button onClick={reRecord} className="btn-ghost">
               Ghi âm lại
             </button>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
-            >
+            <button onClick={save} disabled={saving} className="btn-primary">
               {saving ? "Đang lưu..." : "Lưu bài làm"}
             </button>
           </div>

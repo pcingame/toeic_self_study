@@ -128,16 +128,12 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
 
   if (phase === "intro") {
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600 dark:text-zinc-400">
+      <div className="animate-fade-up space-y-4">
+        <p className="text-sm text-muted">
           Bài test gồm 8 câu chia 3 phần, chạy liên tục không dừng: Part 1 (8 phút cho 5 câu), Part 2
           (10 phút/câu), Part 3 (30 phút).
         </p>
-        <button
-          onClick={start}
-          disabled={starting}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
-        >
+        <button onClick={start} disabled={starting} className="btn-primary">
           {starting ? "Đang chuẩn bị..." : "Bắt đầu Full Test Writing"}
         </button>
       </div>
@@ -146,14 +142,9 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
 
   if (phase === "finished") {
     return (
-      <div className="space-y-4">
-        <p className="text-sm font-medium text-green-700 dark:text-green-400">
-          Đã hoàn thành Full Test Writing! Tất cả bài làm đã được lưu.
-        </p>
-        <Link
-          href="/history"
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-zinc-100"
-        >
+      <div className="animate-fade-up space-y-4">
+        <p className="text-success text-sm">Đã hoàn thành Full Test Writing! Tất cả bài làm đã được lưu.</p>
+        <Link href="/history" className="btn-dark">
           Xem lại lịch sử
         </Link>
       </div>
@@ -165,13 +156,11 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-gray-400 dark:text-zinc-500">{stage.label}</p>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-          {formatClock(timeLeft)}
-        </span>
+        <p className="text-xs font-medium text-muted">{stage.label}</p>
+        <span className="pill-timer">{formatClock(timeLeft)}</span>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-error text-sm">{error}</p>}
 
       {stage.kind === "group" ? (
         <div className="space-y-3">
@@ -180,13 +169,7 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
               <button
                 key={q.id}
                 onClick={() => setActiveGroupIdx(i)}
-                className={`rounded-md px-3 py-1 text-sm font-medium ${
-                  i === activeGroupIdx
-                    ? "bg-blue-600 text-white dark:bg-blue-500"
-                    : answers[q.id]
-                      ? "bg-green-50 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-                      : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400"
-                }`}
+                className={i === activeGroupIdx ? "chip-active" : answers[q.id] ? "chip-done" : "chip-idle"}
               >
                 Câu {q.order_index}
               </button>
@@ -197,37 +180,34 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
             const q = stage.questions[activeGroupIdx];
             return (
               <div className="space-y-3">
-                <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                  {q.context && <p className="text-sm text-gray-600 dark:text-zinc-400">{q.context}</p>}
+                <div className="card p-5">
+                  {q.context && <p className="text-sm text-muted">{q.context}</p>}
                   {q.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={q.image_url} alt="" className="mt-2 max-h-80 w-full rounded-md object-contain" />
                   )}
-                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium text-gray-900 dark:text-zinc-100">{q.prompt_text}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium text-[var(--color-ink)]">{q.prompt_text}</p>
                 </div>
                 <textarea
                   value={answers[q.id] ?? ""}
                   onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
                   rows={4}
                   placeholder="Viết câu trả lời của bạn ở đây..."
-                  className="w-full rounded-md border border-gray-300 bg-white p-3 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400"
+                  className="input-field"
                 />
               </div>
             );
           })()}
 
-          <button
-            onClick={goNext}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
-          >
+          <button onClick={goNext} className="btn-primary">
             Nộp Part 1 &amp; tiếp tục →
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-            {stage.question.context && <p className="text-sm text-gray-600 dark:text-zinc-400">{stage.question.context}</p>}
-            <p className="mt-2 whitespace-pre-wrap text-sm font-medium text-gray-900 dark:text-zinc-100">
+          <div className="card p-5">
+            {stage.question.context && <p className="text-sm text-muted">{stage.question.context}</p>}
+            <p className="mt-2 whitespace-pre-wrap text-sm font-medium text-[var(--color-ink)]">
               {stage.question.prompt_text}
             </p>
           </div>
@@ -236,12 +216,9 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
             onChange={(e) => setAnswers((a) => ({ ...a, [stage.question.id]: e.target.value }))}
             rows={10}
             placeholder="Viết câu trả lời của bạn ở đây..."
-            className="w-full rounded-md border border-gray-300 bg-white p-3 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400"
+            className="input-field"
           />
-          <button
-            onClick={goNext}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
-          >
+          <button onClick={goNext} className="btn-primary">
             Nộp &amp; tiếp tục →
           </button>
         </div>

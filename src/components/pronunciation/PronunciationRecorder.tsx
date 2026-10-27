@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import WaveformBars from "@/components/WaveformBars";
 
 interface SpeechRecognitionResultLike {
   transcript: string;
@@ -174,20 +175,17 @@ export default function PronunciationRecorder({ word }: { word: string }) {
   }
 
   return (
-    <div className="space-y-2 rounded-md border border-dashed border-gray-200 p-3 dark:border-zinc-700">
+    <div className="space-y-2 rounded-xl border border-dashed border-[var(--color-border)] p-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">Luyện phát âm</span>
+        <span className="text-xs font-medium text-muted">Luyện phát âm</span>
         {recState === "recording" ? (
-          <button
-            onClick={stop}
-            className="rounded-md bg-red-50 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100 dark:bg-red-950/50 dark:text-red-300"
-          >
-            ■ Dừng
+          <button onClick={stop} className="pill-rec flex items-center gap-2 px-3 py-1 text-xs">
+            <WaveformBars active bars={4} className="h-3" />■ Dừng
           </button>
         ) : (
           <button
             onClick={start}
-            className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="rounded-xl bg-[var(--color-surface-2)] px-3 py-1 text-xs font-medium text-[var(--color-ink)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] hover:text-[var(--color-primary)]"
           >
             🎤 Ghi âm
           </button>
@@ -201,10 +199,10 @@ export default function PronunciationRecorder({ word }: { word: string }) {
         </p>
       )}
 
-      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-error text-xs">{error}</p>}
 
       {recState === "recording" && (
-        <p className="text-xs text-red-600 dark:text-red-400">● Đang nghe, hãy đọc từ &quot;{word}&quot;...</p>
+        <p className="text-xs text-[var(--color-accent)]">● Đang nghe, hãy đọc từ &quot;{word}&quot;...</p>
       )}
 
       {recState === "done" && (
@@ -212,8 +210,8 @@ export default function PronunciationRecorder({ word }: { word: string }) {
           {audioUrl && <audio controls src={audioUrl} className="w-full" />}
           {verdict && (
             <p
-              className={`text-xs font-medium ${
-                verdict === "correct" ? "text-green-700 dark:text-green-400" : "text-amber-700 dark:text-amber-400"
+              className={`animate-pop text-xs font-medium ${
+                verdict === "correct" ? "text-green-700 dark:text-green-400" : "animate-shake text-amber-700 dark:text-amber-400"
               }`}
             >
               {verdict === "correct"
@@ -221,10 +219,7 @@ export default function PronunciationRecorder({ word }: { word: string }) {
                 : `⚠️ Chưa khớp. Máy nghe được: "${transcript}" — hãy thử lại.`}
             </p>
           )}
-          <button
-            onClick={reset}
-            className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
+          <button onClick={reset} className="btn-ghost px-3 py-1 text-xs">
             Thử lại
           </button>
         </div>

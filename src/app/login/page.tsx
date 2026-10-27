@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { login } from "./actions";
+import WaveformBars from "@/components/WaveformBars";
 
 export default async function LoginPage({
   searchParams,
@@ -10,59 +11,47 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Đăng nhập</h1>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">Vào luyện TOEIC Writing &amp; Speaking của bạn</p>
+      <div className="animate-fade-up w-full max-w-sm space-y-6">
+        <div className="text-center">
+          <div className="mb-3 flex justify-center text-[var(--color-primary)]">
+            <WaveformBars />
+          </div>
+          <h1 className="h1-page">Đăng nhập</h1>
+          <p className="mt-1 text-sm text-muted">Vào luyện TOEIC Writing &amp; Speaking của bạn</p>
         </div>
 
         {message && (
-          <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+          <p className="rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-3 py-2 text-sm text-[var(--color-primary)]">
             {message}
           </p>
         )}
         {error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
             {error}
           </p>
         )}
 
-        <form action={login} className="space-y-4">
+        <form action={login} className="card space-y-4 p-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium">
               Email
             </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400"
-            />
+            <input id="email" name="email" type="email" required className="input-field mt-1" />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
               Mật khẩu
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400"
-            />
+            <input id="password" name="password" type="password" required className="input-field mt-1" />
           </div>
-          <button
-            type="submit"
-            className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
-          >
+          <button type="submit" className="btn-primary w-full">
             Đăng nhập
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 dark:text-zinc-400">
+        <p className="text-center text-sm text-muted">
           Chưa có tài khoản?{" "}
-          <Link href="/signup" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+          <Link href="/signup" className="font-medium text-[var(--color-primary)] hover:underline">
             Đăng ký
           </Link>
         </p>

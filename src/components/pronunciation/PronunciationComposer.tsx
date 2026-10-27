@@ -35,7 +35,7 @@ export default function PronunciationComposer() {
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="card space-y-3 p-5">
       <div>
         <label htmlFor="title" className="block text-sm font-medium">
           Tên danh sách (tùy chọn)
@@ -45,7 +45,7 @@ export default function PronunciationComposer() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="VD: Âm TH và V/W"
-          className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400"
+          className="input-field mt-1"
         />
       </div>
       <div>
@@ -58,19 +58,15 @@ export default function PronunciationComposer() {
           onChange={(e) => setRaw(e.target.value)}
           rows={8}
           placeholder={"pen\npump\nbump\ncab\n..."}
-          className="mt-1 w-full rounded-md border border-gray-300 bg-white p-3 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-blue-400"
+          className="input-field mt-1"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-error text-sm">{error}</p>}
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-zinc-400">{words.length} từ</p>
-        <button
-          onClick={submit}
-          disabled={words.length === 0 || creating}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-400"
-        >
+        <p className="text-sm text-muted">{words.length} từ</p>
+        <button onClick={submit} disabled={words.length === 0 || creating} className="btn-primary">
           {creating ? "Đang tạo..." : "Tạo danh sách phát âm"}
         </button>
       </div>
