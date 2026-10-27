@@ -74,7 +74,13 @@ export default function PronunciationWordCard({ word }: { word: string }) {
     utterance.lang = "en-US";
     const enVoice = voices.find((v) => v.lang === "en-US") ?? voices.find((v) => v.lang.startsWith("en"));
     if (enVoice) utterance.voice = enVoice;
-    utterance.onerror = () => setPlayError("Không phát được âm thanh, hãy thử lại.");
+    utterance.onerror = (e) => {
+      // Chrome fires "canceled"/"interrupted" on the new utterance itself
+      // when cancel() is called right before speak() (as we just did above),
+      // even though it goes on to play fine -- not a real failure.
+      if (e.error === "canceled" || e.error === "interrupted") return;
+      setPlayError("Không phát được âm thanh, hãy thử lại.");
+    };
     window.speechSynthesis.speak(utterance);
   }
 
