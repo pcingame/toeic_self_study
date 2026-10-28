@@ -21,6 +21,47 @@ function waitForVoices(): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
+// How long to wait for playback to actually start before assuming it
+// silently failed. Chrome on macOS has a long-standing bug where the
+// speechSynthesis engine (and occasionally a plain <audio> element) goes
+// quiet -- no error, no "playing"/"start" event -- after the tab loses
+// focus or the machine sits idle for a while.
+const PLAYBACK_START_TIMEOUT_MS = 1200;
+
+// Builds and speaks one utterance, resolving once we know whether it
+// actually started. Chrome on macOS can silently ignore speak() right after
+// cancel() (needs a tick to catch up) or ignore it entirely if the speech
+// engine has gone to sleep -- callers retry once on anything but "ok".
+function attemptSpeak(word: string, voices: SpeechSynthesisVoice[]): Promise<"ok" | "error" | "timeout"> {
+  const synth = window.speechSynthesis;
+  synth.cancel();
+  synth.resume();
+
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = "en-US";
+  const enVoice = voices.find((v) => v.lang === "en-US") ?? voices.find((v) => v.lang.startsWith("en"));
+  if (enVoice) utterance.voice = enVoice;
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (result: "ok" | "error" | "timeout") => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
+    utterance.onstart = () => settle("ok");
+    utterance.onerror = (e) => {
+      // Chrome fires "canceled"/"interrupted" on the new utterance itself
+      // when cancel() is called right before speak() (as we just did above),
+      // even though it goes on to play fine -- let the timeout decide instead.
+      if (e.error === "canceled" || e.error === "interrupted") return;
+      settle("error");
+    };
+    setTimeout(() => synth.speak(utterance), 50);
+    setTimeout(() => settle("timeout"), PLAYBACK_START_TIMEOUT_MS);
+  });
+}
+
 export default function PronunciationWordCard({ word }: { word: string }) {
   const [phonetic, setPhonetic] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -52,12 +93,31 @@ export default function PronunciationWordCard({ word }: { word: string }) {
   function play() {
     setPlayError(null);
     if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.addEventListener("error", () => void fallbackSpeak());
-      audio.play().catch(() => void fallbackSpeak());
+      playDictionaryAudio(audioUrl);
     } else {
       void fallbackSpeak();
     }
+  }
+
+  function playDictionaryAudio(url: string) {
+    const audio = new Audio(url);
+    let started = false;
+    const markStarted = () => {
+      started = true;
+    };
+    const toFallback = () => {
+      if (started) return;
+      started = true;
+      void fallbackSpeak();
+    };
+    audio.addEventListener("playing", markStarted);
+    audio.addEventListener("ended", markStarted);
+    audio.addEventListener("error", toFallback);
+    audio.play().catch(toFallback);
+    // play() can resolve without the audio ever actually starting (decode
+    // stall, Chrome/macOS going quiet, etc.) -- fall back to speech
+    // synthesis if we never actually hear it kick off.
+    setTimeout(toFallback, PLAYBACK_START_TIMEOUT_MS);
   }
 
   async function fallbackSpeak() {
@@ -66,22 +126,13 @@ export default function PronunciationWordCard({ word }: { word: string }) {
       return;
     }
 
-    // Clear any stuck queue from a previous click before speaking again.
-    window.speechSynthesis.cancel();
-
     const voices = await waitForVoices();
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = "en-US";
-    const enVoice = voices.find((v) => v.lang === "en-US") ?? voices.find((v) => v.lang.startsWith("en"));
-    if (enVoice) utterance.voice = enVoice;
-    utterance.onerror = (e) => {
-      // Chrome fires "canceled"/"interrupted" on the new utterance itself
-      // when cancel() is called right before speak() (as we just did above),
-      // even though it goes on to play fine -- not a real failure.
-      if (e.error === "canceled" || e.error === "interrupted") return;
-      setPlayError("Không phát được âm thanh, hãy thử lại.");
-    };
-    window.speechSynthesis.speak(utterance);
+
+    // One retry covers Chrome/macOS's speech engine needing a second nudge
+    // after going quiet (tab lost focus, machine idled, etc.).
+    if ((await attemptSpeak(word, voices)) === "ok") return;
+    if ((await attemptSpeak(word, voices)) === "ok") return;
+    setPlayError("Không phát được âm thanh. Hãy kiểm tra âm lượng máy hoặc xem tab có đang bị tắt tiếng không.");
   }
 
   return (
