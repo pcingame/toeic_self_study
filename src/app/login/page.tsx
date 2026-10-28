@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { login } from "./actions";
 import WaveformBars from "@/components/WaveformBars";
+import SubmitButton from "@/components/auth/SubmitButton";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>;
+  searchParams: Promise<{ error?: string; message?: string; next?: string; email?: string }>;
 }) {
-  const { error, message } = await searchParams;
+  const { error, message, next, email } = await searchParams;
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
@@ -32,21 +33,40 @@ export default async function LoginPage({
         )}
 
         <form action={login} className="card space-y-4 p-6">
+          <input type="hidden" name="next" value={next ?? "/"} />
           <div>
             <label htmlFor="email" className="block text-sm font-medium">
               Email
             </label>
-            <input id="email" name="email" type="email" required className="input-field mt-1" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              defaultValue={email}
+              required
+              className="input-field mt-1"
+            />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Mật khẩu
-            </label>
-            <input id="password" name="password" type="password" required className="input-field mt-1" />
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium">
+                Mật khẩu
+              </label>
+              <Link href="/forgot-password" className="text-xs text-[var(--color-primary)] hover:underline">
+                Quên mật khẩu?
+              </Link>
+            </div>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="input-field mt-1"
+            />
           </div>
-          <button type="submit" className="btn-primary w-full">
-            Đăng nhập
-          </button>
+          <SubmitButton pendingText="Đang đăng nhập…">Đăng nhập</SubmitButton>
         </form>
 
         <p className="text-center text-sm text-muted">

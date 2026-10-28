@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { signup } from "../login/actions";
 import WaveformBars from "@/components/WaveformBars";
+import SubmitButton from "@/components/auth/SubmitButton";
 
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; email?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, email } = await searchParams;
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
@@ -31,17 +32,45 @@ export default async function SignupPage({
             <label htmlFor="email" className="block text-sm font-medium">
               Email
             </label>
-            <input id="email" name="email" type="email" required className="input-field mt-1" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              defaultValue={email}
+              required
+              className="input-field mt-1"
+            />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
               Mật khẩu (ít nhất 6 ký tự)
             </label>
-            <input id="password" name="password" type="password" required minLength={6} className="input-field mt-1" />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              className="input-field mt-1"
+            />
           </div>
-          <button type="submit" className="btn-primary w-full">
-            Tạo tài khoản
-          </button>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium">
+              Nhập lại mật khẩu
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              className="input-field mt-1"
+            />
+          </div>
+          <SubmitButton pendingText="Đang tạo tài khoản…">Tạo tài khoản</SubmitButton>
         </form>
 
         <p className="text-center text-sm text-muted">
