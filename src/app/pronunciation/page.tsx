@@ -16,7 +16,8 @@ export default async function PronunciationPage() {
       <div>
         <h1 className="h1-page">Phát âm</h1>
         <p className="mt-1 text-sm text-muted">
-          Dán danh sách từ cần luyện, hệ thống sẽ tra phiên âm, cho nghe audio chuẩn và gợi ý mẹo phát âm.
+          Dán danh sách từ, một câu dài, hay cả đoạn văn cần luyện — hệ thống sẽ tách từng từ, tra phiên âm, cho
+          nghe audio chuẩn và gợi ý mẹo phát âm.
         </p>
       </div>
 

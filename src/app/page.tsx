@@ -10,7 +10,7 @@ function formatDate(iso: string) {
 const SECTIONS = [
   { href: "/writing", title: "Luyện Writing", desc: "8 câu theo đúng format & thời gian thi thật", Icon: PenIcon },
   { href: "/speaking", title: "Luyện Speaking", desc: "11 câu, ghi âm và nghe lại bài làm", Icon: MicIcon },
-  { href: "/pronunciation", title: "Phát âm", desc: "Dán danh sách từ, tra phiên âm & mẹo phát âm", Icon: PhoneticIcon },
+  { href: "/pronunciation", title: "Phát âm", desc: "Dán từ, câu, hay đoạn văn — tra phiên âm & mẹo phát âm", Icon: PhoneticIcon },
   { href: "/full-test", title: "Full Test", desc: "Làm liên tục toàn bộ đề theo đúng thời gian thi", Icon: StopwatchIcon },
   { href: "/history", title: "Lịch sử", desc: "Xem lại bài viết và bài ghi âm đã làm", Icon: HistoryIcon },
 ];
