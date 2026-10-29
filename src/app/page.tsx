@@ -61,10 +61,14 @@ export default async function HomePage() {
         ) : (
           <div className="card divide-y divide-[var(--color-border)]">
             {stats.recentActivity.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="flex items-center justify-between px-4 py-3 text-sm">
+              <Link
+                key={`${item.type}-${item.id}`}
+                href={item.href}
+                className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-[var(--color-surface-2)]"
+              >
                 <span>{item.label}</span>
                 <span className="text-muted">{formatDate(item.startedAt)}</span>
-              </div>
+              </Link>
             ))}
           </div>
         )}

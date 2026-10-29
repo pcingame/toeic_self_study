@@ -15,3 +15,11 @@ export async function getWritingAttempts(): Promise<WritingAttemptWithQuestion[]
   if (error) throw error;
   return data as unknown as WritingAttemptWithQuestion[];
 }
+
+export async function getAttemptedWritingQuestionIds(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("writing_attempts").select("question_id");
+
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.question_id as string));
+}

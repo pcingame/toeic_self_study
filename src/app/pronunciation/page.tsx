@@ -3,6 +3,7 @@ import { getPronunciationLists } from "@/lib/data/pronunciation";
 import { GENERAL_PRONUNCIATION_TIPS } from "@/lib/pronunciationTips";
 import PronunciationComposer from "@/components/pronunciation/PronunciationComposer";
 import DeleteListButton from "@/components/pronunciation/DeleteListButton";
+import WeakWordsReview from "@/components/pronunciation/WeakWordsReview";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("vi-VN");
@@ -22,6 +23,8 @@ export default async function PronunciationPage() {
       </div>
 
       <PronunciationComposer />
+
+      <WeakWordsReview />
 
       <section className="space-y-3">
         <h2 className="font-display text-lg font-medium">Danh sách đã lưu</h2>

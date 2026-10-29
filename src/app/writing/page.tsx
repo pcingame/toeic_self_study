@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getWritingQuestions } from "@/lib/data/writingQuestions";
+import { getAttemptedWritingQuestionIds } from "@/lib/data/writingAttempts";
 import { formatClock } from "@/lib/examTiming";
 
 const PART_LABELS: Record<number, { title: string; description: string }> = {
@@ -9,7 +10,7 @@ const PART_LABELS: Record<number, { title: string; description: string }> = {
 };
 
 export default async function WritingListPage() {
-  const questions = await getWritingQuestions();
+  const [questions, attemptedIds] = await Promise.all([getWritingQuestions(), getAttemptedWritingQuestionIds()]);
 
   const byPart = [1, 2, 3].map((part) => ({
     part,
@@ -42,6 +43,11 @@ export default async function WritingListPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted">
                     Câu {q.order_index} · {q.group_label}
+                    {attemptedIds.has(q.id) && (
+                      <span className="ml-2 text-[var(--color-primary)]" title="Đã luyện câu này">
+                        ✓
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs text-muted">{formatClock(q.time_limit_sec)}</span>
                 </div>

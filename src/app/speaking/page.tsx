@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSpeakingQuestions } from "@/lib/data/speakingQuestions";
+import { getAttemptedSpeakingQuestionIds } from "@/lib/data/speakingAttempts";
 import { formatClock } from "@/lib/examTiming";
 
 const PART_LABELS: Record<number, { title: string; description: string }> = {
@@ -11,7 +12,7 @@ const PART_LABELS: Record<number, { title: string; description: string }> = {
 };
 
 export default async function SpeakingListPage() {
-  const questions = await getSpeakingQuestions();
+  const [questions, attemptedIds] = await Promise.all([getSpeakingQuestions(), getAttemptedSpeakingQuestionIds()]);
   const byPart = [1, 2, 3, 4, 5].map((part) => ({
     part,
     items: questions.filter((q) => q.part === part),
@@ -43,6 +44,11 @@ export default async function SpeakingListPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted">
                     Câu {q.order_index} · {q.group_label}
+                    {attemptedIds.has(q.id) && (
+                      <span className="ml-2 text-[var(--color-primary)]" title="Đã luyện câu này">
+                        ✓
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs text-muted">
                     {q.prep_time_sec > 0 && `chuẩn bị ${formatClock(q.prep_time_sec)} · `}

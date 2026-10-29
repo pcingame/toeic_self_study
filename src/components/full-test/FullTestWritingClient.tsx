@@ -40,6 +40,7 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gradingProgress, setGradingProgress] = useState({ done: 0, total: 0 });
 
   const advancingRef = useRef(false);
   const stageStartedAtRef = useRef<string>(new Date().toISOString());
@@ -120,8 +121,12 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
     // Grade in the background so the timed flow never waits on the AI call --
     // results show up later in History. Failures are swallowed here; they're
     // already visible as a missing score/feedback on the attempt.
-    for (const row of inserted ?? []) {
-      void gradeWritingAttempt(row.id).catch(() => {});
+    const insertedIds = (inserted ?? []).map((row) => row.id as string);
+    setGradingProgress((p) => ({ done: p.done, total: p.total + insertedIds.length }));
+    for (const id of insertedIds) {
+      void gradeWritingAttempt(id)
+        .catch(() => {})
+        .finally(() => setGradingProgress((p) => ({ ...p, done: p.done + 1 })));
     }
 
     const nextIndex = stageIndex + 1;
@@ -155,7 +160,13 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
     return (
       <div className="animate-fade-up space-y-4">
         <p className="text-success text-sm">Đã hoàn thành Full Test Writing! Tất cả bài làm đã được lưu.</p>
-        <p className="text-sm text-muted">AI đang chấm điểm ở nền, xem kết quả trong Lịch sử sau ít phút.</p>
+        {gradingProgress.total > 0 && (
+          <p className="text-sm text-muted">
+            {gradingProgress.done < gradingProgress.total
+              ? `Đang chấm điểm AI: ${gradingProgress.done}/${gradingProgress.total} bài...`
+              : `✓ Đã chấm xong ${gradingProgress.total} bài, xem kết quả trong Lịch sử.`}
+          </p>
+        )}
         <Link href="/history" className="btn-dark">
           Xem lại lịch sử
         </Link>
@@ -167,9 +178,9 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium text-muted">{stage.label}</p>
-        <span className="pill-timer">{formatClock(timeLeft)}</span>
+        <span className={timeLeft <= 10 ? "pill-rec" : "pill-timer"}>{formatClock(timeLeft)}</span>
       </div>
 
       {error && <p className="text-error text-sm">{error}</p>}

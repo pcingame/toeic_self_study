@@ -12,6 +12,7 @@ export interface DashboardStats {
     type: "writing" | "speaking";
     label: string;
     startedAt: string;
+    href: string;
   }[];
 }
 
@@ -40,18 +41,26 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const speaking = speakingAttempts ?? [];
 
   const recentActivity = [
-    ...writing.map((a) => ({
-      id: a.id as string,
-      type: "writing" as const,
-      label: `Writing Part ${(a as unknown as { writing_questions: { part: number; order_index: number } }).writing_questions?.part} · Câu ${(a as unknown as { writing_questions: { part: number; order_index: number } }).writing_questions?.order_index}`,
-      startedAt: a.started_at as string,
-    })),
-    ...speaking.map((a) => ({
-      id: a.id as string,
-      type: "speaking" as const,
-      label: `Speaking Part ${(a as unknown as { speaking_questions: { part: number; order_index: number } }).speaking_questions?.part} · Câu ${(a as unknown as { speaking_questions: { part: number; order_index: number } }).speaking_questions?.order_index}`,
-      startedAt: a.started_at as string,
-    })),
+    ...writing.map((a) => {
+      const q = (a as unknown as { writing_questions: { part: number; order_index: number } }).writing_questions;
+      return {
+        id: a.id as string,
+        type: "writing" as const,
+        label: `Writing Part ${q?.part} · Câu ${q?.order_index}`,
+        startedAt: a.started_at as string,
+        href: `/writing/${q?.part}/${a.question_id}`,
+      };
+    }),
+    ...speaking.map((a) => {
+      const q = (a as unknown as { speaking_questions: { part: number; order_index: number } }).speaking_questions;
+      return {
+        id: a.id as string,
+        type: "speaking" as const,
+        label: `Speaking Part ${q?.part} · Câu ${q?.order_index}`,
+        startedAt: a.started_at as string,
+        href: `/speaking/${q?.part}/${a.question_id}`,
+      };
+    }),
   ]
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
     .slice(0, 6);

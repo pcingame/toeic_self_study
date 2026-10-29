@@ -28,3 +28,11 @@ export async function getSpeakingAttempts(): Promise<SpeakingAttemptWithQuestion
     }),
   );
 }
+
+export async function getAttemptedSpeakingQuestionIds(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("speaking_attempts").select("question_id");
+
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.question_id as string));
+}

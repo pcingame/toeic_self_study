@@ -15,7 +15,7 @@ export interface WordHistory {
   lastAt: string;
 }
 
-type HistoryMap = Record<string, WordHistory>;
+export type HistoryMap = Record<string, WordHistory>;
 
 function storageKey(word: string): string {
   return word.trim().toLowerCase();
@@ -45,6 +45,10 @@ function eventName(word: string): string {
 
 export function getWordHistory(word: string): WordHistory | null {
   return readAll()[storageKey(word)] ?? null;
+}
+
+export function getAllWordHistory(): HistoryMap {
+  return readAll();
 }
 
 export function recordAttempt(word: string, score: number): WordHistory {

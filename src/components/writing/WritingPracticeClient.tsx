@@ -108,7 +108,9 @@ export default function WritingPracticeClient({
         <Link href="/writing" className="link-muted">
           ← Quay lại danh sách Writing
         </Link>
-        {phase === "active" && <span className="pill-timer">{formatClock(timeLeft)}</span>}
+        {phase === "active" && (
+          <span className={timeLeft <= 10 ? "pill-rec" : "pill-timer"}>{formatClock(timeLeft)}</span>
+        )}
       </div>
 
       <div className="card p-5">

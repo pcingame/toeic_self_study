@@ -275,12 +275,18 @@ export default function SpeakingRecorder({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium text-muted">
           Part {question.part} · {question.group_label} · Câu {question.order_index}
         </p>
         {(phase === "prep" || phase === "recording") && (
-          <span className={phase === "recording" ? "pill-rec flex items-center gap-2" : "pill-timer"}>
+          <span
+            className={
+              phase === "recording" || timeLeft <= 10
+                ? "pill-rec flex items-center gap-2"
+                : "pill-timer"
+            }
+          >
             {phase === "recording" && <WaveformBars active bars={4} className="h-3" />}
             {phase === "prep" ? "Chuẩn bị" : "Đang ghi âm"} · {formatClock(timeLeft)}
           </span>
