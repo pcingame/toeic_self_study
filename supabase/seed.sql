@@ -61,6 +61,15 @@ insert into public.speaking_questions (part, group_label, order_index, prompt_te
 (1, 'Part 1 - Ôn thêm', 100, 'Thank you for calling HealthFirst Pharmacy. To refill a prescription, press 1. To consult with our pharmacist, press 2. To inquire about over-the-counter products such as vitamins, allergy medications, or pain relievers, press 3. For all other inquiries, please stay on the line, and our team will assist you shortly.', null, null, 45, 45),
 (1, 'Part 1 - Ôn thêm', 101, 'Good evening! This is the eleven o''clock Chicago News. In tonight''s news broadcast, we will cover the mayoral election campaign, the opening ceremony of the new city hall, and our city high school''s baseball games. But first, let''s go to Rachel Carson for our traffic report.', null, null, 45, 45);
 
+-- "PRACTICE" stress-drill sentences (Part 1_02 audio track) from the same
+-- deck -- short standalone sentences for practicing word/sentence stress.
+insert into public.speaking_questions (part, group_label, order_index, prompt_text, image_url, audio_prompt_url, prep_time_sec, speak_time_sec) values
+(1, 'Part 1 - Ôn thêm (Practice)', 102, 'A member of our staff will be with you shortly.', null, null, 45, 45),
+(1, 'Part 1 - Ôn thêm (Practice)', 103, 'How did you become such a great designer?', null, null, 45, 45),
+(1, 'Part 1 - Ôn thêm (Practice)', 104, 'We want to welcome everyone to our annual company picnic.', null, null, 45, 45),
+(1, 'Part 1 - Ôn thêm (Practice)', 105, 'Enjoy the tour and I''ll see you at the main entrance of the museum at 4.', null, null, 45, 45),
+(1, 'Part 1 - Ôn thêm (Practice)', 106, 'We''ll be handing out free samples and copies of our hair care newsletter.', null, null, 45, 45);
+
 -- Additional Part 1 picture-description prompts (from "TOEIC Writing" slide decks LS 1-3,
 -- Toeic Tiến Chung). order_index kept outside the 1-8 official-exam range for the same reason.
 insert into public.writing_questions (part, group_label, order_index, prompt_text, context, image_url, time_limit_sec) values
