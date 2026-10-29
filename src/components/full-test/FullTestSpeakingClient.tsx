@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createPracticeSession, completePracticeSession } from "@/app/full-test/actions";
+import { gradeSpeakingAttempt } from "@/app/speaking/gradeActions";
 import SpeakingRecorder from "@/components/speaking/SpeakingRecorder";
 import type { SpeakingQuestion } from "@/types/database";
 
@@ -29,7 +30,12 @@ export default function FullTestSpeakingClient({
     setStarting(false);
   }
 
-  async function handleNext() {
+  async function handleNext(attemptId: string, transcript: string) {
+    // Grade in the background so the timed flow never waits on the AI call --
+    // results show up later in History. Failures are swallowed here; they're
+    // already visible as a missing score/feedback on the attempt.
+    void gradeSpeakingAttempt(attemptId, transcript).catch(() => {});
+
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((i) => i + 1);
       return;
@@ -55,6 +61,7 @@ export default function FullTestSpeakingClient({
     return (
       <div className="animate-fade-up space-y-4">
         <p className="text-success text-sm">Đã hoàn thành {testLabel}! Tất cả bài ghi âm đã được lưu.</p>
+        <p className="text-sm text-muted">AI đang chấm điểm ở nền, xem kết quả trong Lịch sử sau ít phút.</p>
         <Link href="/history" className="btn-dark">
           Xem lại lịch sử
         </Link>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { createPracticeSession, completePracticeSession } from "@/app/full-test/actions";
+import { gradeWritingAttempt } from "@/app/writing/gradeActions";
 import { formatClock, WRITING_PART1_GROUP_SEC } from "@/lib/examTiming";
 import type { WritingQuestion } from "@/types/database";
 
@@ -106,11 +107,21 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
             },
           ];
 
-    const { error: insertError } = await supabase.from("writing_attempts").insert(rows);
+    const { data: inserted, error: insertError } = await supabase
+      .from("writing_attempts")
+      .insert(rows)
+      .select("id");
     if (insertError) {
       setError(insertError.message);
       advancingRef.current = false;
       return;
+    }
+
+    // Grade in the background so the timed flow never waits on the AI call --
+    // results show up later in History. Failures are swallowed here; they're
+    // already visible as a missing score/feedback on the attempt.
+    for (const row of inserted ?? []) {
+      void gradeWritingAttempt(row.id).catch(() => {});
     }
 
     const nextIndex = stageIndex + 1;
@@ -144,6 +155,7 @@ export default function FullTestWritingClient({ questions }: { questions: Writin
     return (
       <div className="animate-fade-up space-y-4">
         <p className="text-success text-sm">Đã hoàn thành Full Test Writing! Tất cả bài làm đã được lưu.</p>
+        <p className="text-sm text-muted">AI đang chấm điểm ở nền, xem kết quả trong Lịch sử sau ít phút.</p>
         <Link href="/history" className="btn-dark">
           Xem lại lịch sử
         </Link>

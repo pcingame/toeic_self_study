@@ -69,6 +69,10 @@ interface GradeInput {
   answerText: string;
 }
 
+// Caps the cost/latency of a single grading call -- well beyond any
+// legitimate TOEIC answer length (longest is the ~300-word Writing essay).
+const MAX_ANSWER_CHARS = 6000;
+
 export async function gradeAnswer(input: GradeInput): Promise<GradeResult> {
   const maxScore =
     input.examType === "writing"
@@ -84,11 +88,16 @@ export async function gradeAnswer(input: GradeInput): Promise<GradeResult> {
     `Bạn là giám khảo chấm thi TOEIC ${input.examType === "writing" ? "Writing" : "Speaking"}. ` +
     "Chấm nghiêm túc, công bằng, bám sát tiêu chí được cung cấp. Luôn trả lời bằng tiếng Việt, ngắn gọn, cụ thể, mang tính xây dựng, không khen chung chung.";
 
+  const answerText =
+    input.answerText.length > MAX_ANSWER_CHARS
+      ? `${input.answerText.slice(0, MAX_ANSWER_CHARS)}\n[...bài làm bị cắt bớt vì quá dài...]`
+      : input.answerText;
+
   const user = [
     `Tiêu chí chấm: ${rubric}`,
     `Đề bài: ${input.promptText}`,
     input.context ? `Yêu cầu thêm: ${input.context}` : null,
-    `Bài làm của thí sinh:\n${input.answerText}`,
+    `Bài làm của thí sinh:\n${answerText}`,
   ]
     .filter(Boolean)
     .join("\n\n");

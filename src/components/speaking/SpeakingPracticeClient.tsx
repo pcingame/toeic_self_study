@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import SpeakingRecorder from "./SpeakingRecorder";
 import { gradeSpeakingAttempt } from "@/app/speaking/gradeActions";
@@ -21,10 +21,17 @@ export default function SpeakingPracticeClient({
   const [gradeState, setGradeState] = useState<GradeState>("idle");
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [gradeError, setGradeError] = useState<string | null>(null);
+  const attemptRef = useRef<{ attemptId: string; transcript: string } | null>(null);
 
   async function handleSubmitted(attemptId: string, transcript: string) {
     setSubmitted(true);
+    attemptRef.current = { attemptId, transcript };
+    await runGrading(attemptId, transcript);
+  }
+
+  async function runGrading(attemptId: string, transcript: string) {
     setGradeState("grading");
+    setGradeError(null);
     try {
       const result = await gradeSpeakingAttempt(attemptId, transcript);
       if (result) {
@@ -58,7 +65,17 @@ export default function SpeakingPracticeClient({
               vẫn có thể nghe lại bản ghi âm ở mục Lịch sử.
             </p>
           )}
-          {gradeState === "error" && <p className="text-error text-sm">{gradeError}</p>}
+          {gradeState === "error" && (
+            <div className="space-y-2">
+              <p className="text-error text-sm">{gradeError}</p>
+              <button
+                onClick={() => attemptRef.current && runGrading(attemptRef.current.attemptId, attemptRef.current.transcript)}
+                className="btn-ghost"
+              >
+                Chấm lại
+              </button>
+            </div>
+          )}
           {gradeState === "done" && grade && (
             <div className="card space-y-2 p-4">
               <p className="font-display text-lg font-semibold text-[var(--color-ink)]">

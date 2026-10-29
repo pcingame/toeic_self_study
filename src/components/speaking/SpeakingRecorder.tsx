@@ -54,6 +54,9 @@ export default function SpeakingRecorder({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  // Assume supported until checked client-side after mount, so SSR/hydration
+  // output matches (window isn't available on the server).
+  const [speechSupported, setSpeechSupported] = useState(true);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -63,6 +66,11 @@ export default function SpeakingRecorder({
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const transcriptRef = useRef("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSpeechSupported(!!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -288,6 +296,13 @@ export default function SpeakingRecorder({
       </div>
 
       {error && <p className="text-error text-sm">{error}</p>}
+
+      {phase === "ready" && !speechSupported && (
+        <p className="text-sm text-muted">
+          Trình duyệt này không hỗ trợ nhận diện giọng nói, bài ghi âm sẽ được lưu nhưng sẽ không được AI chấm điểm
+          tự động. Dùng Chrome hoặc Edge để được chấm điểm.
+        </p>
+      )}
 
       {phase === "ready" && (
         <button onClick={start} className="btn-accent">

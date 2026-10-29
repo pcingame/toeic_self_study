@@ -30,6 +30,7 @@ export default function WritingPracticeClient({
   const startedAtRef = useRef<string | null>(null);
   const answerRef = useRef(answer);
   answerRef.current = answer;
+  const attemptIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (phase !== "active") return;
@@ -84,10 +85,15 @@ export default function WritingPracticeClient({
       return;
     }
     setPhase("submitted");
+    attemptIdRef.current = inserted.id;
+    await runGrading(inserted.id);
+  }
 
+  async function runGrading(attemptId: string) {
     setGradeState("grading");
+    setGradeError(null);
     try {
-      const result = await gradeWritingAttempt(inserted.id);
+      const result = await gradeWritingAttempt(attemptId);
       setGrade(result);
       setGradeState("done");
     } catch (err) {
@@ -144,7 +150,17 @@ export default function WritingPracticeClient({
               <p className="text-success text-sm">Đã lưu bài làm.</p>
 
               {gradeState === "grading" && <p className="text-sm text-muted">Đang chấm điểm bằng AI...</p>}
-              {gradeState === "error" && <p className="text-error text-sm">{gradeError}</p>}
+              {gradeState === "error" && (
+                <div className="space-y-2">
+                  <p className="text-error text-sm">{gradeError}</p>
+                  <button
+                    onClick={() => attemptIdRef.current && runGrading(attemptIdRef.current)}
+                    className="btn-ghost"
+                  >
+                    Chấm lại
+                  </button>
+                </div>
+              )}
               {gradeState === "done" && grade && (
                 <div className="card space-y-2 p-4">
                   <p className="font-display text-lg font-semibold text-[var(--color-ink)]">
