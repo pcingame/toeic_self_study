@@ -39,7 +39,7 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 ### Tổng quan (`/`)
 - Thống kê số câu Writing/Speaking đã luyện trên tổng số câu, số lượt làm bài.
 - Danh sách hoạt động gần đây (bài Writing/Speaking mới nhất).
-- Lối vào nhanh tới 5 khu vực chính: Writing, Speaking, Phát âm, Full Test, Lịch sử.
+- Lối vào nhanh tới 6 khu vực chính: Writing, Speaking, Phát âm, Phân tích câu, Full Test, Lịch sử.
 
 ### Luyện Writing (`/writing`)
 - **Part 1** — Viết câu mô tả tranh dùng 2 từ cho sẵn (5 câu chính thức + bộ câu "ôn thêm" lấy từ tài liệu TOEIC Tiến Chung).
@@ -70,6 +70,12 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 - Lưu lịch sử điểm theo từng từ ở `localStorage` (điểm tốt nhất, số lần luyện, mốc "đã thành thạo" ≥ 70 điểm) — không cần bảng DB riêng.
 - Thanh tiến độ theo từng danh sách (bao nhiêu % từ đã đạt ngưỡng thành thạo).
 
+### Phân tích câu (`/sentence-analysis`)
+- Dán một câu tiếng Anh bất kỳ → Claude phân tích và trả về: IPA (Anh-Mỹ + Anh-Anh), cách đọc phỏng âm tiếng Việt, dịch nghĩa cả câu.
+- Bảng phân tích từng từ: phiên âm, từ loại, nghĩa trong ngữ cảnh câu.
+- Phân tích cấu trúc ngữ pháp theo từng mệnh đề (chủ ngữ/động từ/bổ ngữ...), công thức cấu trúc tổng quát (vd `S + V + that + S + V + Adj`) kèm chú giải ký hiệu.
+- Lưu lại từng câu đã phân tích để xem lại hoặc xoá (có xác nhận trước khi xoá).
+
 ### Full Test (`/full-test`)
 - Làm liên tục toàn bộ đề Writing (8 câu, ~60 phút) hoặc Speaking (11 câu, ~20 phút) theo đúng cấu trúc thời gian thi thật, không được tạm dừng giữa chừng.
 - Tạo một `practice_session` khi bắt đầu, đánh dấu hoàn thành khi nộp xong, dùng để nhóm các attempt lại với nhau.
@@ -91,7 +97,9 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 | `writing_attempts`, `speaking_attempts` | Bài làm của từng user (RLS theo `user_id`); có thêm `score`/`max_score`/`feedback`/`graded_at` do AI chấm, `speaking_attempts` có thêm `transcript` |
 | `practice_sessions` | Nhóm các attempt theo một lượt Full Test |
 | `pronunciation_lists`, `pronunciation_items` | Danh sách từ luyện phát âm của từng user |
+| `sentence_analyses` | Câu đã phân tích bằng AI (IPA, từ loại từng từ, cấu trúc ngữ pháp) của từng user |
 | Storage bucket `speaking-recordings` | File ghi âm Speaking, path dạng `<user_id>/<question_id>/<timestamp>.webm` |
+| Storage bucket `question-images` (riêng tư) | Ảnh đề bài Writing Part 1, truy cập qua signed URL |
 
 Toàn bộ bảng đều bật RLS; schema định nghĩa trong `supabase/schema.sql` + các migration ở `supabase/migrations/`, dữ liệu mẫu nạp qua `supabase/seed.sql`.
 
