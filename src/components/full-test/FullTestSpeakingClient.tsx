@@ -8,7 +8,13 @@ import type { SpeakingQuestion } from "@/types/database";
 
 type Phase = "intro" | "active" | "finished";
 
-export default function FullTestSpeakingClient({ questions }: { questions: SpeakingQuestion[] }) {
+export default function FullTestSpeakingClient({
+  questions,
+  testLabel = "Full Test Speaking",
+}: {
+  questions: SpeakingQuestion[];
+  testLabel?: string;
+}) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -39,7 +45,7 @@ export default function FullTestSpeakingClient({ questions }: { questions: Speak
           Bài test gồm {questions.length} câu, chạy liên tục không dừng. Hãy chuẩn bị micro trước khi bắt đầu.
         </p>
         <button onClick={start} disabled={starting} className="btn-primary">
-          {starting ? "Đang chuẩn bị..." : "Bắt đầu Full Test Speaking"}
+          {starting ? "Đang chuẩn bị..." : `Bắt đầu ${testLabel}`}
         </button>
       </div>
     );
@@ -48,7 +54,7 @@ export default function FullTestSpeakingClient({ questions }: { questions: Speak
   if (phase === "finished") {
     return (
       <div className="animate-fade-up space-y-4">
-        <p className="text-success text-sm">Đã hoàn thành Full Test Speaking! Tất cả bài ghi âm đã được lưu.</p>
+        <p className="text-success text-sm">Đã hoàn thành {testLabel}! Tất cả bài ghi âm đã được lưu.</p>
         <Link href="/history" className="btn-dark">
           Xem lại lịch sử
         </Link>

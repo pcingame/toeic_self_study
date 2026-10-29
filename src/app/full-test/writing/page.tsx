@@ -2,7 +2,8 @@ import { getWritingQuestions } from "@/lib/data/writingQuestions";
 import FullTestWritingClient from "@/components/full-test/FullTestWritingClient";
 
 export default async function FullTestWritingPage() {
-  const questions = await getWritingQuestions();
+  const allQuestions = await getWritingQuestions();
+  const questions = allQuestions.filter((q) => q.order_index < 100);
   return (
     <div className="space-y-6">
       <div>
