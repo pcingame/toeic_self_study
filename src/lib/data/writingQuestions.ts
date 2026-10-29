@@ -18,6 +18,10 @@ async function resolveImageUrl(
   return data?.signedUrl ?? null;
 }
 
+// Does not resolve image_url -- callers that only need question metadata
+// (lists, "find next question") shouldn't pay for a signed-URL round trip
+// per question. Use resolveWritingImageUrls() when images are actually
+// rendered.
 export async function getWritingQuestions(): Promise<WritingQuestion[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -26,7 +30,11 @@ export async function getWritingQuestions(): Promise<WritingQuestion[]> {
     .order("order_index", { ascending: true });
 
   if (error) throw error;
-  const questions = data as WritingQuestion[];
+  return data as WritingQuestion[];
+}
+
+export async function resolveWritingImageUrls(questions: WritingQuestion[]): Promise<WritingQuestion[]> {
+  const supabase = await createClient();
   return Promise.all(
     questions.map(async (q) => ({ ...q, image_url: await resolveImageUrl(supabase, q.image_url) })),
   );
