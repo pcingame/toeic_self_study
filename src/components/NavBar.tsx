@@ -16,9 +16,12 @@ const LINKS = [
 
 export default async function NavBar() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
+  // getSession() reads the already-validated session from cookies with no
+  // network round trip -- safe here because middleware already called the
+  // network-validating getUser() for this request before any page renders.
+  const { data } = await supabase.auth.getSession();
 
-  if (!data.user) return null;
+  if (!data.session) return null;
 
   return (
     <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-paper)]/80 backdrop-blur-md">
