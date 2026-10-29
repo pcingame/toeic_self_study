@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/writing", label: "Writing" },
   { href: "/speaking", label: "Speaking" },
   { href: "/pronunciation", label: "Phát âm" },
+  { href: "/sentence-analysis", label: "Phân tích câu" },
   { href: "/full-test", label: "Full Test" },
   { href: "/history", label: "Lịch sử" },
 ];

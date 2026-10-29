@@ -87,3 +87,38 @@ export interface PronunciationItem {
   word: string;
   order_index: number;
 }
+
+export interface SentenceAnalysisWord {
+  word: string;
+  ipa: string;
+  partOfSpeech: string;
+  meaning: string;
+}
+
+export interface SentenceAnalysisClausePart {
+  role: string;
+  text: string;
+}
+
+export interface SentenceAnalysisClause {
+  type: string;
+  text: string;
+  parts: SentenceAnalysisClausePart[];
+  meaning: string;
+}
+
+export interface SentenceAnalysis {
+  id: string;
+  user_id: string;
+  sentence: string;
+  translation: string;
+  ipa_us: string;
+  ipa_uk: string;
+  vietnamese_approx: string;
+  note: string | null;
+  words: SentenceAnalysisWord[];
+  clauses: SentenceAnalysisClause[];
+  structure_pattern: string;
+  structure_legend: string;
+  created_at: string;
+}

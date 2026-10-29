@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getDashboardStats } from "@/lib/data/stats";
 import AnimatedNumber from "@/components/AnimatedNumber";
-import { PenIcon, MicIcon, PhoneticIcon, StopwatchIcon, HistoryIcon } from "@/components/icons";
+import { PenIcon, MicIcon, PhoneticIcon, SentenceAnalysisIcon, StopwatchIcon, HistoryIcon } from "@/components/icons";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("vi-VN");
@@ -11,6 +11,12 @@ const SECTIONS = [
   { href: "/writing", title: "Luyện Writing", desc: "8 câu theo đúng format & thời gian thi thật", Icon: PenIcon },
   { href: "/speaking", title: "Luyện Speaking", desc: "11 câu, ghi âm và nghe lại bài làm", Icon: MicIcon },
   { href: "/pronunciation", title: "Phát âm", desc: "Dán từ, câu, hay đoạn văn — tra phiên âm & mẹo phát âm", Icon: PhoneticIcon },
+  {
+    href: "/sentence-analysis",
+    title: "Phân tích câu",
+    desc: "Dịch nghĩa, từ loại từng từ & cấu trúc ngữ pháp của 1 câu",
+    Icon: SentenceAnalysisIcon,
+  },
   { href: "/full-test", title: "Full Test", desc: "Làm liên tục toàn bộ đề theo đúng thời gian thi", Icon: StopwatchIcon },
   { href: "/history", title: "Lịch sử", desc: "Xem lại bài viết và bài ghi âm đã làm", Icon: HistoryIcon },
 ];

@@ -52,6 +52,18 @@ export function StopwatchIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function SentenceAnalysisIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 5h12" />
+      <path d="M4 10h8" />
+      <path d="M4 15h5" />
+      <circle cx="17" cy="16" r="3" />
+      <path d="m19.3 18.3 2.2 2.2" />
+    </svg>
+  );
+}
+
 export function HistoryIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base(props)}>
