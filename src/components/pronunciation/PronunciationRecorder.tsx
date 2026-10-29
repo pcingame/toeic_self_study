@@ -10,39 +10,7 @@ import {
   MASTERY_THRESHOLD,
   type WordHistory,
 } from "@/lib/pronunciationHistory";
-
-interface SpeechRecognitionAlternativeLike {
-  transcript: string;
-  confidence?: number;
-}
-interface SpeechRecognitionResultLike {
-  length: number;
-  [index: number]: SpeechRecognitionAlternativeLike;
-}
-interface SpeechRecognitionEventLike extends Event {
-  results: { [index: number]: SpeechRecognitionResultLike };
-}
-interface SpeechRecognitionErrorEventLike extends Event {
-  error: string;
-}
-interface SpeechRecognitionLike extends EventTarget {
-  lang: string;
-  maxAlternatives: number;
-  interimResults: boolean;
-  start: () => void;
-  stop: () => void;
-  onresult: ((e: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((e: SpeechRecognitionErrorEventLike) => void) | null;
-  onend: (() => void) | null;
-}
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  }
-}
+import type { SpeechRecognitionAlternativeLike, SpeechRecognitionLike } from "@/types/speechRecognition";
 
 type RecState = "idle" | "recording" | "done";
 

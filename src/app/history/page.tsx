@@ -39,6 +39,16 @@ export default async function HistoryPage() {
               <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--color-ink)]">
                 {attempt.answer_text || <span className="text-muted">(không có nội dung)</span>}
               </p>
+              {attempt.graded_at && (
+                <div className="mt-2 rounded-xl bg-[var(--color-surface-2)] p-3">
+                  <p className="text-sm font-medium text-[var(--color-ink)]">
+                    {attempt.score}/{attempt.max_score} điểm (AI chấm)
+                  </p>
+                  {attempt.feedback && (
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted">{attempt.feedback}</p>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -65,6 +75,16 @@ export default async function HistoryPage() {
                 <audio controls src={attempt.audioUrl} className="mt-2 w-full" />
               ) : (
                 <p className="mt-2 text-sm text-muted">(không có file ghi âm)</p>
+              )}
+              {attempt.graded_at && attempt.score != null && (
+                <div className="mt-2 rounded-xl bg-[var(--color-surface-2)] p-3">
+                  <p className="text-sm font-medium text-[var(--color-ink)]">
+                    {attempt.score}/{attempt.max_score} điểm (AI chấm, dựa trên transcript)
+                  </p>
+                  {attempt.feedback && (
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted">{attempt.feedback}</p>
+                  )}
+                </div>
               )}
             </div>
           ))}

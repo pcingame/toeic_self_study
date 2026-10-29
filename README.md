@@ -15,7 +15,7 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 | File storage | **Supabase Storage** | Bucket `speaking-recordings` (private, RLS theo `user_id`) lưu file ghi âm Speaking |
 | Bảo mật dữ liệu | **Row Level Security (RLS)** | Mỗi bảng user-owned đều có policy `auth.uid() = user_id`; câu hỏi (`*_questions`) chỉ cần `authenticated` để đọc |
 | Hosting | **Vercel** | Next.js server components + server actions chạy serverless |
-| API ngoài | `dictionaryapi.dev`, `api.datamuse.com` | Tra phiên âm IPA (có fallback ARPAbet → IPA tự chuyển đổi khi từ hiếm) |
+| API ngoài | `dictionaryapi.dev`, `api.datamuse.com`, **Claude API** (`claude-sonnet-5`) | Tra phiên âm IPA (fallback ARPAbet khi từ hiếm); chấm điểm AI cho bài Writing/Speaking theo tiêu chí TOEIC (structured output, trả JSON điểm + nhận xét) |
 | API trình duyệt | Web Speech API, MediaRecorder API | Chấm điểm phát âm (SpeechRecognition) và ghi âm Speaking (MediaRecorder), chạy hoàn toàn client-side |
 | Lưu trữ phụ | `localStorage` | Lịch sử điểm phát âm theo từng từ (không cần bảng DB riêng) |
 
@@ -47,6 +47,7 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 - **Part 3** — Luận nêu ý kiến (1 câu, 30 phút).
 - Đồng hồ đếm giờ riêng theo cấu hình từng câu (`time_limit_sec` trong DB).
 - Lưu bài làm (text) vào Supabase, có thể xem lại ở `/history`.
+- **Chấm điểm AI**: ngay sau khi nộp bài, server action gửi bài làm cho Claude chấm theo đúng thang điểm từng Part (0-3 / 0-4 / 0-5), trả về điểm + nhận xét ưu điểm/lỗi cụ thể bằng tiếng Việt, lưu lại để xem ở `/history`.
 - **Trang hướng dẫn Part 1** (`/writing/part1-guide`): tiêu chí chấm điểm, 5 mẫu câu cơ bản (S+V, S+V+O, S+V+C, S+V+O+C, S+V+O1+O2), quy trình 4 bước viết câu tả tranh, quy trình 5 bước đặt câu từ ý tiếng Việt, mẹo làm bài, ngữ pháp liên từ hay gặp (now that, although/though, while/when/before/after + V-ing, if loại 1, in order to), và hơn 20 ví dụ lỗi sai → sửa.
 
 ### Luyện Speaking (`/speaking`)
@@ -58,6 +59,7 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 - Ghi âm trực tiếp trên trình duyệt (MediaRecorder), có pha chuẩn bị (prep) → ghi âm (recording) → nghe lại & lưu (review).
 - Xử lý lỗi micro chi tiết (bị chặn quyền, không tìm thấy thiết bị, thiết bị bị app khác chiếm, trình duyệt không hỗ trợ, ghi âm bị treo khi dừng...).
 - Tải file ghi âm lên Supabase Storage (bucket riêng tư theo user), lưu attempt vào DB, nghe lại ở `/history`.
+- **Chấm điểm AI**: trong lúc ghi âm, trình duyệt đồng thời chạy Web Speech API để tạo transcript; sau khi lưu bài, transcript được gửi cho Claude chấm theo tiêu chí TOEIC Speaking từng Part, trả điểm + nhận xét. Part 1 (đọc to đoạn văn) chỉ chấm được độ khớp nội dung qua transcript — phát âm/ngữ điệu cần tự nghe lại và đối chiếu hướng dẫn.
 - **Trang hướng dẫn Part 1** (`/speaking/part1-guide`): tiêu chí chấm điểm (phát âm / ngữ điệu-ngắt nghỉ-nhấn), cách nhấn trọng âm, từ cần nhấn vs. không nhấn (và ngoại lệ), 5 quy tắc nối âm có ví dụ IPA, quy trình 5 bước tự học chủ động, mẫu bài đọc có đánh dấu nhấn/ngắt.
 
 ### Phát âm (`/pronunciation`)
@@ -86,7 +88,7 @@ Web tự ôn luyện TOEIC Writing (8 câu) & Speaking (11 câu), đúng format 
 | Bảng | Mục đích |
 |---|---|
 | `writing_questions`, `speaking_questions` | Ngân hàng câu hỏi (đọc công khai cho user đã đăng nhập) |
-| `writing_attempts`, `speaking_attempts` | Bài làm của từng user (RLS theo `user_id`) |
+| `writing_attempts`, `speaking_attempts` | Bài làm của từng user (RLS theo `user_id`); có thêm `score`/`max_score`/`feedback`/`graded_at` do AI chấm, `speaking_attempts` có thêm `transcript` |
 | `practice_sessions` | Nhóm các attempt theo một lượt Full Test |
 | `pronunciation_lists`, `pronunciation_items` | Danh sách từ luyện phát âm của từng user |
 | Storage bucket `speaking-recordings` | File ghi âm Speaking, path dạng `<user_id>/<question_id>/<timestamp>.webm` |
@@ -101,13 +103,19 @@ Toàn bộ bảng đều bật RLS; schema định nghĩa trong `supabase/schema
 4. Vào **Project Settings → API**, lấy `Project URL` và `anon public` key.
 5. Vào **Authentication → Providers → Email**: nếu muốn đăng ký xong đăng nhập ngay (không cần xác nhận email), tắt "Confirm email".
 
-## 2. Cấu hình local
+## 2. Lấy Claude API key (để chấm điểm AI)
+
+1. Vào https://console.anthropic.com/settings/keys → tạo API key mới.
+2. Tính năng chấm điểm là tuỳ chọn: nếu không cấu hình key, bài Writing/Speaking vẫn lưu bình thường, chỉ không có điểm/nhận xét AI.
+3. Chi phí rất thấp cho dùng cá nhân — ước tính dưới 1 USD/tháng kể cả luyện mỗi ngày (model `claude-sonnet-5`, ~1-2k token mỗi lần chấm).
+
+## 3. Cấu hình local
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Điền `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` vừa lấy ở trên vào `.env.local`.
+Điền `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` và `ANTHROPIC_API_KEY` vào `.env.local`.
 
 ```bash
 npm install
@@ -116,15 +124,15 @@ npm run dev
 
 Mở http://localhost:3000, đăng ký tài khoản, bắt đầu luyện tập.
 
-## 3. Deploy lên Vercel
+## 4. Deploy lên Vercel
 
 1. Push repo lên GitHub.
 2. Vào https://vercel.com/new, import repo.
-3. Thêm 2 biến môi trường `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` trong phần Environment Variables.
+3. Thêm 3 biến môi trường `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY` trong phần Environment Variables.
 4. Deploy. Dùng được từ mọi thiết bị, dữ liệu đồng bộ qua Supabase.
 
 ## Ghi chú
 
 Câu hỏi Part 1 Writing và Part 2 Speaking (mô tả tranh) hiện dùng mô tả bằng chữ thay cho ảnh thật (vì chưa có ảnh). Có thể thêm ảnh thật bằng cách tải ảnh lên một bucket Storage công khai trong Supabase rồi cập nhật cột `image_url` của câu hỏi trong Table editor.
 
-Chưa có chấm điểm AI cho Writing/Speaking — đây là nơi luyện tập đúng format/thời gian và lưu lại bài làm để tự xem lại. Riêng phần Phát âm đã có chấm điểm tự động (Web Speech API) cho từng từ.
+Chấm điểm AI (Writing + Speaking) dùng Claude, chạy qua server action ngay sau khi nộp bài — xem mục "Chấm điểm AI" ở từng phần Writing/Speaking phía trên. Phần Phát âm dùng chấm điểm riêng, miễn phí, chạy hoàn toàn trên trình duyệt (Web Speech API), không gọi Claude.

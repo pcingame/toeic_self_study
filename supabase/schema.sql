@@ -41,7 +41,11 @@ create table if not exists public.writing_attempts (
   answer_text text not null default '',
   started_at timestamptz not null default now(),
   submitted_at timestamptz,
-  duration_sec int
+  duration_sec int,
+  score int, -- AI-graded score (see max_score for the scale, which varies by part)
+  max_score int,
+  feedback text,
+  graded_at timestamptz
 );
 
 create table if not exists public.speaking_attempts (
@@ -52,7 +56,12 @@ create table if not exists public.speaking_attempts (
   audio_path text,
   started_at timestamptz not null default now(),
   submitted_at timestamptz,
-  duration_sec int
+  duration_sec int,
+  transcript text, -- captured client-side via the Web Speech API during recording
+  score int,
+  max_score int,
+  feedback text,
+  graded_at timestamptz
 );
 
 create index if not exists writing_attempts_user_idx on public.writing_attempts (user_id, started_at desc);

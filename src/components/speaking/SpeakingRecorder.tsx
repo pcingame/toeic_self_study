@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatClock } from "@/lib/examTiming";
 import WaveformBars from "@/components/WaveformBars";
 import type { SpeakingQuestion } from "@/types/database";
+import type { SpeechRecognitionLike } from "@/types/speechRecognition";
 
 type Phase = "ready" | "prep" | "recording" | "review";
 
@@ -46,7 +47,7 @@ export default function SpeakingRecorder({
 }: {
   question: SpeakingQuestion;
   sessionId?: string;
-  onSubmitted: () => void;
+  onSubmitted: (attemptId: string, transcript: string) => void;
 }) {
   const [phase, setPhase] = useState<Phase>("ready");
   const [timeLeft, setTimeLeft] = useState(question.prep_time_sec || question.speak_time_sec);
@@ -60,11 +61,18 @@ export default function SpeakingRecorder({
   const audioBlobRef = useRef<Blob | null>(null);
   const startedAtRef = useRef<string | null>(null);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const transcriptRef = useRef("");
 
   useEffect(() => {
     return () => {
       if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        // already stopped
+      }
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,6 +100,32 @@ export default function SpeakingRecorder({
     setPhase("ready");
   }
 
+  function startTranscription() {
+    const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Ctor) return;
+    try {
+      const recognition = new Ctor();
+      recognition.lang = "en-US";
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const result = e.results[i];
+          if (result?.isFinal && result[0]?.transcript) {
+            transcriptRef.current = `${transcriptRef.current} ${result[0].transcript}`.trim();
+          }
+        }
+      };
+      // Best-effort layer on top of the recording itself -- transcription
+      // failures (offline, browser quirks) must never block the recording.
+      recognition.onerror = () => {};
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      // No transcription this attempt; grading will just be skipped for it.
+    }
+  }
+
   async function beginRecording() {
     let stream: MediaStream;
     try {
@@ -104,6 +138,7 @@ export default function SpeakingRecorder({
 
     streamRef.current = stream;
     chunksRef.current = [];
+    transcriptRef.current = "";
 
     let recorder: MediaRecorder;
     const mimeType = pickMimeType();
@@ -129,6 +164,11 @@ export default function SpeakingRecorder({
       audioBlobRef.current = blob;
       setAudioUrl(URL.createObjectURL(blob));
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        // already stopped
+      }
       setPhase("review");
     };
     recorder.onerror = () => {
@@ -136,6 +176,7 @@ export default function SpeakingRecorder({
     };
 
     recorder.start();
+    startTranscription();
     setTimeLeft(question.speak_time_sec);
     setPhase("recording");
   }
@@ -202,22 +243,26 @@ export default function SpeakingRecorder({
     }
 
     const startedAt = startedAtRef.current ?? new Date().toISOString();
-    const { error: insertError } = await supabase.from("speaking_attempts").insert({
-      user_id: user.id,
-      question_id: question.id,
-      session_id: sessionId ?? null,
-      audio_path: path,
-      started_at: startedAt,
-      submitted_at: new Date().toISOString(),
-      duration_sec: question.speak_time_sec,
-    });
+    const { data: inserted, error: insertError } = await supabase
+      .from("speaking_attempts")
+      .insert({
+        user_id: user.id,
+        question_id: question.id,
+        session_id: sessionId ?? null,
+        audio_path: path,
+        started_at: startedAt,
+        submitted_at: new Date().toISOString(),
+        duration_sec: question.speak_time_sec,
+      })
+      .select("id")
+      .single();
 
     setSaving(false);
     if (insertError) {
       setError(`Lỗi khi lưu bài làm: ${insertError.message}`);
       return;
     }
-    onSubmitted();
+    onSubmitted(inserted.id, transcriptRef.current);
   }
 
   return (

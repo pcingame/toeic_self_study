@@ -44,6 +44,10 @@ export interface WritingAttempt {
   started_at: string;
   submitted_at: string | null;
   duration_sec: number | null;
+  score: number | null;
+  max_score: number | null;
+  feedback: string | null;
+  graded_at: string | null;
 }
 
 export interface SpeakingAttempt {
@@ -55,6 +59,18 @@ export interface SpeakingAttempt {
   started_at: string;
   submitted_at: string | null;
   duration_sec: number | null;
+  transcript: string | null;
+  score: number | null;
+  max_score: number | null;
+  feedback: string | null;
+  graded_at: string | null;
+}
+
+export interface GradeResult {
+  score: number;
+  maxScore: number;
+  strengths: string;
+  improvements: string;
 }
 
 export interface PronunciationList {

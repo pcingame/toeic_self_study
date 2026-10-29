@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock } from "@/lib/examTiming";
-import type { WritingQuestion } from "@/types/database";
+import { gradeWritingAttempt } from "@/app/writing/gradeActions";
+import type { GradeResult, WritingQuestion } from "@/types/database";
 
 type Phase = "ready" | "active" | "submitted";
+type GradeState = "idle" | "grading" | "done" | "error";
 
 export default function WritingPracticeClient({
   question,
@@ -22,6 +24,9 @@ export default function WritingPracticeClient({
   const [answer, setAnswer] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [gradeState, setGradeState] = useState<GradeState>("idle");
+  const [grade, setGrade] = useState<GradeResult | null>(null);
+  const [gradeError, setGradeError] = useState<string | null>(null);
   const startedAtRef = useRef<string | null>(null);
   const answerRef = useRef(answer);
   answerRef.current = answer;
@@ -59,15 +64,19 @@ export default function WritingPracticeClient({
     const startedAt = startedAtRef.current ?? new Date().toISOString();
     const durationSec = question.time_limit_sec - (autoSubmitted ? 0 : timeLeft);
 
-    const { error } = await supabase.from("writing_attempts").insert({
-      user_id: user.id,
-      question_id: question.id,
-      session_id: sessionId ?? null,
-      answer_text: answerRef.current,
-      started_at: startedAt,
-      submitted_at: new Date().toISOString(),
-      duration_sec: durationSec,
-    });
+    const { data: inserted, error } = await supabase
+      .from("writing_attempts")
+      .insert({
+        user_id: user.id,
+        question_id: question.id,
+        session_id: sessionId ?? null,
+        answer_text: answerRef.current,
+        started_at: startedAt,
+        submitted_at: new Date().toISOString(),
+        duration_sec: durationSec,
+      })
+      .select("id")
+      .single();
 
     setSaving(false);
     if (error) {
@@ -75,6 +84,16 @@ export default function WritingPracticeClient({
       return;
     }
     setPhase("submitted");
+
+    setGradeState("grading");
+    try {
+      const result = await gradeWritingAttempt(inserted.id);
+      setGrade(result);
+      setGradeState("done");
+    } catch (err) {
+      setGradeError(err instanceof Error ? err.message : "Không chấm được điểm cho bài này.");
+      setGradeState("error");
+    }
   }
 
   return (
@@ -121,8 +140,21 @@ export default function WritingPracticeClient({
             </button>
           )}
           {phase === "submitted" && (
-            <div className="flex items-center gap-3">
+            <div className="space-y-3">
               <p className="text-success text-sm">Đã lưu bài làm.</p>
+
+              {gradeState === "grading" && <p className="text-sm text-muted">Đang chấm điểm bằng AI...</p>}
+              {gradeState === "error" && <p className="text-error text-sm">{gradeError}</p>}
+              {gradeState === "done" && grade && (
+                <div className="card space-y-2 p-4">
+                  <p className="font-display text-lg font-semibold text-[var(--color-ink)]">
+                    {grade.score}/{grade.maxScore} điểm
+                  </p>
+                  {grade.strengths && <p className="text-sm text-success">{grade.strengths}</p>}
+                  <p className="whitespace-pre-wrap text-sm text-[var(--color-ink)]/80">{grade.improvements}</p>
+                </div>
+              )}
+
               <Link href={nextHref} className="btn-dark">
                 Câu tiếp theo →
               </Link>
